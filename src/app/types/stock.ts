@@ -1,0 +1,43 @@
+
+export interface StockData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+  volume: number;
+}
+
+export interface StockInfo {
+  symbol: string;
+  currentPrice: number;
+  change: number;
+  changePercent: number;
+  data: StockData[];
+  meta: {
+    companyName: string;
+    currency: string;
+    exchangeName: string;
+    lastUpdated: string;
+  };
+}
+
+export interface CalculationResult {
+  investAmount: number;
+  investDate: string;
+  pastPrice: number;
+  currentPrice: number;
+  shares: number;
+  currentValue: number;
+  profit: number;
+  profitPercent: number;
+  yearlyReturn: number;
+}
+
+export interface CandlestickData {
+  time: string;
+  open: number;
+  high: number;
+  low: number;
+  close: number;
+}

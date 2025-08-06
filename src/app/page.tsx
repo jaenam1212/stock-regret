@@ -1,103 +1,108 @@
-import Image from "next/image";
+'use client';
+
+import { useState, useEffect, useCallback } from 'react';
+import StockChart from '@/components/chart/StockChart';
+import StockHeader from '@/components/StockHeader';
+import RegretCalculator from '@/components/calculator/RegretCalculator';
+import ChatSidebar from '@/app/components/chat/ChatSidebar';
+import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import ErrorDisplay from '@/components/ui/ErrorDisplay';
+import { StockInfo } from '@/types/stock';
 
 export default function Home() {
-  return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+  const [stockInfo, setStockInfo] = useState<StockInfo | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [symbol, setSymbol] = useState('AAPL');
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
+  const fetchStockData = useCallback(async (stockSymbol: string) => {
+    setLoading(true);
+    setError(null);
+    
+    try {
+      const response = await fetch(`/api/stock-data?symbol=${stockSymbol}`);
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch stock data');
+      }
+      
+      const data = await response.json();
+      
+      if (data.error) {
+        throw new Error(data.error);
+      }
+      
+      setStockInfo(data);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Unknown error occurred');
+      console.error('Error fetching stock data:', err);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchStockData(symbol);
+  }, [symbol, fetchStockData]);
+
+  const handleSymbolChange = (newSymbol: string) => {
+    setSymbol(newSymbol);
+    fetchStockData(newSymbol);
+  };
+
+  if (loading) return <LoadingSpinner />;
+  if (error) return <ErrorDisplay error={error} onRetry={() => fetchStockData(symbol)} />;
+  if (!stockInfo) return <ErrorDisplay error="No data available" />;
+
+  return (
+    <main className="h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex flex-col">
+      {/* 헤더 */}
+      <header className="flex-shrink-0 border-b border-gray-800 bg-black/50 backdrop-blur-sm">
+        <div className="container mx-auto px-4 py-3">
+                  <div className="flex items-center justify-between">
+          <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
+            아! 살껄 계산기
+          </h1>
           <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+            href="/stats"
+            className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
+            통계 보기
           </a>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
-    </div>
+        </div>
+      </header>
+
+      {/* 메인 컨텐츠 */}
+      <div className="flex-1 overflow-hidden">
+        <div className="h-full flex flex-col lg:flex-row">
+          {/* 메인 영역 */}
+          <div className="flex-1 overflow-y-auto p-4 lg:p-6">
+            <div className="max-w-7xl mx-auto space-y-4 lg:space-y-6">
+              {/* 주식 정보 & 차트 */}
+              <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800 overflow-hidden">
+                <StockHeader 
+                  stockInfo={stockInfo}
+                  symbol={symbol}
+                  onSymbolChange={handleSymbolChange}
+                />
+                <div className="p-4 lg:p-6">
+                  <StockChart data={stockInfo.data} />
+                </div>
+              </div>
+
+              {/* 후회 계산기 */}
+              <RegretCalculator 
+                stockInfo={stockInfo}
+                className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800"
+              />
+            </div>
+          </div>
+
+          {/* 사이드바 - 채팅 */}
+          <ChatSidebar symbol={stockInfo.symbol} />
+        </div>
+      </div>
+    </main>
   );
 }
