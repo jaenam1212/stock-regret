@@ -1,7 +1,6 @@
-
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { io, Socket } from 'socket.io-client';
 
 interface ChatMessage {
@@ -36,7 +35,17 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
 
   // 소켓 연결
   useEffect(() => {
-    socketRef.current = io('http://localhost:3001');
+    const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+
+    console.log('Connecting to:', API_URL);
+
+    socketRef.current = io(API_URL, {
+      transports: ['websocket', 'polling'],
+      upgrade: true,
+      rememberUpgrade: true,
+      timeout: 20000,
+      forceNew: true,
+    });
 
     socketRef.current.on('connect', () => {
       setIsConnected(true);
@@ -53,7 +62,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
     });
 
     socketRef.current.on('newMessage', (message: ChatMessage) => {
-      setMessages(prev => [...prev, message]);
+      setMessages((prev) => [...prev, message]);
     });
 
     socketRef.current.on('userJoined', (data) => {
@@ -64,7 +73,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
         timestamp: data.timestamp,
         symbol,
       };
-      setMessages(prev => [...prev, joinMessage]);
+      setMessages((prev) => [...prev, joinMessage]);
     });
 
     socketRef.current.on('userTyping', (data) => {
@@ -110,7 +119,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
 
   const handleTyping = (e: React.ChangeEvent<HTMLInputElement>) => {
     setNewMessage(e.target.value);
-    
+
     if (socketRef.current) {
       socketRef.current.emit('typing', {
         symbol,
@@ -130,19 +139,23 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
       </button>
 
       {/* 사이드바 */}
-      <aside className={`
+      <aside
+        className={`
         ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
         fixed lg:relative right-0 top-0 h-full
         w-full sm:w-80 lg:w-96
         bg-gray-900/95 backdrop-blur-sm border-l border-gray-800
         transition-transform duration-300 z-40
         flex flex-col
-      `}>
+      `}
+      >
         <div className="p-4 lg:p-6 border-b border-gray-800">
           <div className="flex items-center justify-between">
             <h3 className="text-lg font-bold">{symbol} 채팅방</h3>
             <div className="flex items-center gap-2">
-              <div className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`} />
+              <div
+                className={`w-2 h-2 rounded-full ${isConnected ? 'bg-green-500' : 'bg-red-500'}`}
+              />
               <button
                 onClick={() => setIsOpen(false)}
                 className="lg:hidden text-gray-400 hover:text-white"
@@ -155,7 +168,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
             {isConnected ? '연결됨' : '연결 중...'}
           </div>
         </div>
-        
+
         {/* 메시지 영역 */}
         <div className="flex-1 overflow-y-auto p-4 lg:p-6 space-y-3">
           {messages.map((message) => (
@@ -206,7 +219,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
 
       {/* 모바일 오버레이 */}
       {isOpen && (
-        <div 
+        <div
           className="lg:hidden fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsOpen(false)}
         />
