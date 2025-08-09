@@ -1,9 +1,8 @@
-
 'use client';
 
-import { useState } from 'react';
+import { formatUSD, getApiBaseUrl } from '@/lib/utils';
 import { StockInfo } from '@/types/stock';
-import { formatUSD } from '@/lib/utils';
+import { useEffect, useState } from 'react';
 
 interface StockHeaderProps {
   stockInfo: StockInfo;
@@ -11,8 +10,41 @@ interface StockHeaderProps {
   onSymbolChange: (symbol: string) => void;
 }
 
-export default function StockHeader({ stockInfo, symbol, onSymbolChange }: StockHeaderProps) {
+export default function StockHeader({
+  stockInfo,
+  symbol,
+  onSymbolChange,
+}: StockHeaderProps) {
   const [inputSymbol, setInputSymbol] = useState(symbol);
+  const apiBase = getApiBaseUrl();
+  const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
+
+  useEffect(() => {
+    let isMounted = true;
+    const checkHealth = async () => {
+      try {
+        if (!apiBase) {
+          // 로컬 Next API 라우트 사용 중
+          setApiHealthy(true);
+          return;
+        }
+        const res = await fetch(`${apiBase.replace(/\/$/, '')}/health`, {
+          cache: 'no-store',
+        });
+        if (!isMounted) return;
+        setApiHealthy(res.ok);
+      } catch {
+        if (!isMounted) return;
+        setApiHealthy(false);
+      }
+    };
+    checkHealth();
+    const id = setInterval(checkHealth, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(id);
+    };
+  }, [apiBase]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -33,39 +65,61 @@ export default function StockHeader({ stockInfo, symbol, onSymbolChange }: Stock
               {stockInfo.meta.companyName}
             </span>
           </div>
-          
+
           <div className="flex items-center gap-4 mt-2">
             <span className="text-2xl lg:text-3xl font-semibold">
               {formatUSD(stockInfo.currentPrice)}
             </span>
-            <div className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
-              stockInfo.change >= 0 
-                ? 'bg-green-500/10 text-green-500' 
-                : 'bg-red-500/10 text-red-500'
-            }`}>
+            <div
+              className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
+                stockInfo.change >= 0
+                  ? 'bg-green-500/10 text-green-500'
+                  : 'bg-red-500/10 text-red-500'
+              }`}
+            >
               <span className="text-sm lg:text-base font-medium">
                 {stockInfo.change >= 0 ? '↑' : '↓'}
                 {Math.abs(stockInfo.change).toFixed(2)}
               </span>
               <span className="text-sm lg:text-base">
-                ({stockInfo.changePercent >= 0 ? '+' : ''}{stockInfo.changePercent.toFixed(2)}%)
+                ({stockInfo.changePercent >= 0 ? '+' : ''}
+                {stockInfo.changePercent.toFixed(2)}%)
               </span>
             </div>
+
+            {/* 백엔드 연결 상태 배지 */}
+            <span
+              className={`text-xs px-2 py-1 rounded border ${
+                apiHealthy === null
+                  ? 'bg-gray-500/10 text-gray-300 border-gray-700/40'
+                  : apiHealthy
+                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-700/40'
+                    : 'bg-red-500/10 text-red-400 border-red-700/40'
+              }`}
+              title={apiBase ? `API: ${apiBase}` : 'NEXT API 라우트 사용 중'}
+            >
+              {apiBase ? 'API' : 'Local API'}{' '}
+              {apiHealthy === null
+                ? '(checking...)'
+                : apiHealthy
+                  ? '(online)'
+                  : '(offline)'}
+            </span>
           </div>
         </div>
-        
+
         <form onSubmit={handleSubmit} className="flex gap-2">
           <input
             type="text"
             value={inputSymbol}
             onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
             placeholder="AAPL"
-            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white 
+            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white
                      focus:border-blue-500 focus:outline-none transition-colors w-24"
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium 
+            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium
                      transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
           >
             검색

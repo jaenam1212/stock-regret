@@ -1,5 +1,5 @@
 // src/app/hooks/useExchangeRate.ts
-import { useState, useEffect } from 'react';
+import { useEffect, useState } from 'react';
 
 interface ExchangeRateData {
   fromCurrency: string;
@@ -18,23 +18,23 @@ export function useExchangeRate() {
   const fetchExchangeRate = async () => {
     setLoading(true);
     setError(null);
-    
+
     try {
+      // 항상 Next 내부 API로 호출 (서버에서 외부 백엔드 프록시)
       const response = await fetch('/api/exchange-rate?from=KRW&to=USD');
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch exchange rate');
       }
-      
+
       const data: ExchangeRateData = await response.json();
-      
+
       setExchangeRate(data.rate);
       setLastUpdated(data.lastUpdated);
-      
+
       if (data.isFallback) {
         console.warn('Using fallback exchange rate');
       }
-      
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Unknown error occurred');
       console.error('Error fetching exchange rate:', err);
@@ -46,10 +46,10 @@ export function useExchangeRate() {
 
   useEffect(() => {
     fetchExchangeRate();
-    
+
     // 1시간마다 환율 업데이트
     const interval = setInterval(fetchExchangeRate, 60 * 60 * 1000);
-    
+
     return () => clearInterval(interval);
   }, []);
 
@@ -58,6 +58,6 @@ export function useExchangeRate() {
     loading,
     error,
     lastUpdated,
-    refetch: fetchExchangeRate
+    refetch: fetchExchangeRate,
   };
-} 
+}
