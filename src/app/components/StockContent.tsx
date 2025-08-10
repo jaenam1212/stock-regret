@@ -1,7 +1,9 @@
 'use client';
 
 import { getStockData } from '@/app/api';
+import AuthModal from '@/app/components/auth/AuthModal';
 import ChatSidebar from '@/app/components/chat/ChatSidebar';
+import { useAuth } from '@/app/hooks/useAuth';
 import StockHeader from '@/components/StockHeader';
 import RegretCalculator from '@/components/calculator/RegretCalculator';
 import StockChart from '@/components/chart/StockChart';
@@ -21,6 +23,9 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
   const [symbol, setSymbol] = useState(initialStockInfo.symbol);
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
+  const [showAuthModal, setShowAuthModal] = useState(false);
+
+  const { user, signOut } = useAuth();
 
   const handleSymbolChange = async (newSymbol: string) => {
     setSymbol(newSymbol);
@@ -60,12 +65,32 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
             <h1 className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-green-400 to-blue-500 bg-clip-text text-transparent">
               아! 살껄 계산기
             </h1>
-            <a
-              href="/stats"
-              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
-            >
-              통계 보기
-            </a>
+            <div className="flex items-center gap-2">
+              <a
+                href="/history"
+                className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
+              >
+                계산 내역
+              </a>
+              {user ? (
+                <div className="flex items-center gap-2">
+                  <span className="text-sm text-gray-400">{user.email}</span>
+                  <button
+                    onClick={() => signOut()}
+                    className="px-4 py-2 bg-red-600 hover:bg-red-700 rounded text-sm font-medium transition-colors"
+                  >
+                    로그아웃
+                  </button>
+                </div>
+              ) : (
+                <button
+                  onClick={() => setShowAuthModal(true)}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+                >
+                  로그인
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
@@ -108,6 +133,12 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
         {/* 사이드바 - 채팅 */}
         <ChatSidebar symbol={stockInfo.symbol} />
       </div>
+
+      {/* 인증 모달 */}
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+      />
     </main>
   );
 }

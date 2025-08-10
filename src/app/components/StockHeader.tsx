@@ -1,7 +1,7 @@
 'use client';
 
 import { checkBackendHealth } from '@/app/api';
-import { formatUSD } from '@/lib/utils';
+import { formatUSD } from '@/app/lib/utils';
 import { StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 
@@ -106,7 +106,7 @@ export default function StockHeader({
             type="text"
             value={inputSymbol}
             onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
-            placeholder="AAPL"
+            placeholder="NVDA"
             className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white
                      focus:border-blue-500 focus:outline-none transition-colors w-24"
           />

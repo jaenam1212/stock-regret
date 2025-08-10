@@ -1,5 +1,5 @@
+import { getApiBaseUrl } from '@/app/lib/utils';
 import apiClient from './client';
-import { getApiBaseUrl } from '@/lib/utils';
 
 export interface HealthCheckResponse {
   status: string;
@@ -27,19 +27,23 @@ export const checkBackendHealth = async (): Promise<boolean> => {
 };
 
 // 백엔드 헬스체크 (상세 정보)
-export const getBackendHealth = async (): Promise<HealthCheckResponse | null> => {
-  try {
-    const apiBase = getApiBaseUrl();
-    if (!apiBase) {
+export const getBackendHealth =
+  async (): Promise<HealthCheckResponse | null> => {
+    try {
+      const apiBase = getApiBaseUrl();
+      if (!apiBase) {
+        return null;
+      }
+
+      const response = await apiClient.get(
+        `${apiBase.replace(/\/$/, '')}/health`,
+        {
+          timeout: 5000,
+        }
+      );
+      return response.data;
+    } catch (error) {
+      console.error('Backend health check failed:', error);
       return null;
     }
-
-    const response = await apiClient.get(`${apiBase.replace(/\/$/, '')}/health`, {
-      timeout: 5000,
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Backend health check failed:', error);
-    return null;
-  }
-};
+  };

@@ -1,5 +1,7 @@
 'use client';
 
+import { useAuth } from '@/app/hooks/useAuth';
+import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
 import { useExchangeRate } from '@/app/hooks/useExchangeRate';
 import { CalculationResult, StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
@@ -24,7 +26,11 @@ export default function RegretCalculator({
   const [calculation, setCalculation] = useState<CalculationResult | null>(
     null
   );
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
   const { exchangeRate, loading: exchangeRateLoading } = useExchangeRate();
+  const { user } = useAuth();
+  const { saveCalculation } = useCalculationHistory(user?.id);
 
   // 선택된 날짜가 변경되면 투자 날짜 업데이트
   useEffect(() => {
@@ -40,7 +46,7 @@ export default function RegretCalculator({
     : '';
   const maxDate = new Date().toISOString().split('T')[0];
 
-  const calculateRegret = () => {
+  const calculateRegret = async () => {
     if (!investDate || !investAmount) {
       alert('모든 항목을 입력해주세요');
       return;
@@ -108,7 +114,7 @@ export default function RegretCalculator({
       yearlyReturn,
     });
 
-    setCalculation({
+    const result = {
       investAmount,
       investDate: investDateObj.toLocaleDateString('ko-KR'),
       pastPrice,
@@ -118,7 +124,23 @@ export default function RegretCalculator({
       profit,
       profitPercent,
       yearlyReturn,
-    });
+    };
+
+    setCalculation(result);
+    setSaved(false);
+
+    // 로그인된 사용자인 경우 계산 내역 저장
+    if (user && saveCalculation) {
+      setSaving(true);
+      try {
+        await saveCalculation(stockInfo.symbol, result);
+        setSaved(true);
+      } catch (err) {
+        console.error('Failed to save calculation:', err);
+      } finally {
+        setSaving(false);
+      }
+    }
   };
 
   return (
@@ -151,7 +173,25 @@ export default function RegretCalculator({
           onCalculate={calculateRegret}
         />
 
-        {calculation && <CalculationResults calculation={calculation} />}
+        {calculation && (
+          <div>
+            <CalculationResults calculation={calculation} />
+            {user && (
+              <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-gray-400">계산 내역 저장</span>
+                  {saving ? (
+                    <span className="text-blue-400 text-sm">저장 중...</span>
+                  ) : saved ? (
+                    <span className="text-green-400 text-sm">✓ 저장됨</span>
+                  ) : (
+                    <span className="text-gray-500 text-sm">자동 저장</span>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

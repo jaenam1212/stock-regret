@@ -12,7 +12,7 @@ export default async function Home() {
 
     if (externalApiBase) {
       // 외부 백엔드가 있으면 사용
-      const url = `${externalApiBase.replace(/\/$/, '')}/api/stock/data?symbol=AAPL`;
+      const url = `${externalApiBase.replace(/\/$/, '')}/api/stock/data?symbol=NVDA`;
       const response = await fetch(url);
 
       if (!response.ok) {
@@ -23,7 +23,7 @@ export default async function Home() {
     } else {
       // 로컬 개발용 기본 데이터
       stockInfo = {
-        symbol: 'AAPL',
+        symbol: 'NVDA',
         currentPrice: 150.0,
         change: 2.5,
         changePercent: 1.67,
@@ -66,7 +66,7 @@ export default async function Home() {
     console.error('Error fetching stock data:', err);
     // 에러 시 기본 데이터로 폴백
     stockInfo = {
-      symbol: 'AAPL',
+      symbol: 'NVDA',
       currentPrice: 0,
       change: 0,
       changePercent: 0,

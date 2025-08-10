@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server';
 
 export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
-  const symbol = searchParams.get('symbol') || 'AAPL';
+  const symbol = searchParams.get('symbol') || 'NVDA';
   //const period = searchParams.get('period') || '1y'; // 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
   const externalApiBase = (process.env.NEXT_PUBLIC_API_URL || '').trim();
 
