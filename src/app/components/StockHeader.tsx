@@ -1,6 +1,7 @@
 'use client';
 
-import { formatUSD, getApiBaseUrl } from '@/lib/utils';
+import { checkBackendHealth } from '@/app/api';
+import { formatUSD } from '@/lib/utils';
 import { StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 
@@ -16,23 +17,15 @@ export default function StockHeader({
   onSymbolChange,
 }: StockHeaderProps) {
   const [inputSymbol, setInputSymbol] = useState(symbol);
-  const apiBase = getApiBaseUrl();
   const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
     let isMounted = true;
     const checkHealth = async () => {
       try {
-        if (!apiBase) {
-          // 로컬 Next API 라우트 사용 중
-          setApiHealthy(true);
-          return;
-        }
-        const res = await fetch(`${apiBase.replace(/\/$/, '')}/health`, {
-          cache: 'no-store',
-        });
+        const isHealthy = await checkBackendHealth();
         if (!isMounted) return;
-        setApiHealthy(res.ok);
+        setApiHealthy(isHealthy);
       } catch {
         if (!isMounted) return;
         setApiHealthy(false);
@@ -44,7 +37,7 @@ export default function StockHeader({
       isMounted = false;
       clearInterval(id);
     };
-  }, [apiBase]);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -96,9 +89,9 @@ export default function StockHeader({
                     ? 'bg-emerald-500/10 text-emerald-400 border-emerald-700/40'
                     : 'bg-red-500/10 text-red-400 border-red-700/40'
               }`}
-              title={apiBase ? `API: ${apiBase}` : 'NEXT API 라우트 사용 중'}
+              title="백엔드 연결 상태"
             >
-              {apiBase ? 'API' : 'Local API'}{' '}
+              API{' '}
               {apiHealthy === null
                 ? '(checking...)'
                 : apiHealthy

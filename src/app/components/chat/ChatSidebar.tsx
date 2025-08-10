@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import { io, Socket } from 'socket.io-client';
+import { Socket, io } from 'socket.io-client';
 
 interface ChatMessage {
   id: string;
@@ -16,7 +16,7 @@ interface ChatSidebarProps {
 }
 
 export default function ChatSidebar({ symbol }: ChatSidebarProps) {
-  const [isOpen, setIsOpen] = useState(true);
+  const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState('');
   const [nickname, setNickname] = useState('');
@@ -130,19 +130,19 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
 
   return (
     <>
-      {/* 모바일 토글 버튼 */}
+      {/* 토글 버튼 - 상단 우측 */}
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="lg:hidden fixed bottom-4 right-4 z-50 bg-blue-600 text-white p-3 rounded-full shadow-lg"
+        className="fixed top-4 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg transition-colors"
       >
-        💬
+        {isOpen ? '✕' : '💬'}
       </button>
 
       {/* 사이드바 */}
       <aside
         className={`
-        ${isOpen ? 'translate-x-0' : 'translate-x-full lg:translate-x-0'}
-        fixed lg:relative right-0 top-0 h-full
+        ${isOpen ? 'translate-x-0' : 'translate-x-full'}
+        fixed lg:absolute right-0 top-0 h-full
         w-full sm:w-80 lg:w-96
         bg-gray-900/95 backdrop-blur-sm border-l border-gray-800
         transition-transform duration-300 z-40
@@ -158,7 +158,7 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
               />
               <button
                 onClick={() => setIsOpen(false)}
-                className="lg:hidden text-gray-400 hover:text-white"
+                className="text-gray-400 hover:text-white"
               >
                 ✕
               </button>
@@ -217,10 +217,10 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
         </div>
       </aside>
 
-      {/* 모바일 오버레이 */}
+      {/* 오버레이 */}
       {isOpen && (
         <div
-          className="lg:hidden fixed inset-0 bg-black/50 z-30"
+          className="fixed inset-0 bg-black/50 z-30"
           onClick={() => setIsOpen(false)}
         />
       )}

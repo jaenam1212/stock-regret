@@ -25,42 +25,16 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // 무료 환율 API 사용 (API 키 불필요)
-    const url = `https://open.er-api.com/v6/latest/${fromCurrency}`;
-
-    const response = await fetch(url, {
-      headers: {
-        'User-Agent':
-          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+    // 백엔드가 없으면 기본 에러 응답
+    return NextResponse.json(
+      {
+        error: 'Backend service not available',
+        details: 'External API not configured',
       },
-    });
-
-    if (!response.ok) {
-      throw new Error(`Exchange rate API error: ${response.status}`);
-    }
-
-    const data = await response.json();
-
-    if (!data.result || data.result !== 'success') {
-      throw new Error('Failed to fetch exchange rate');
-    }
-
-    const rate = data.rates[toCurrency];
-    if (!rate) {
-      throw new Error('Currency not found');
-    }
-
-    // 환율 변환: 1 USD = ? KRW 형태로 변환
-    const convertedRate = 1 / rate;
-
-    return NextResponse.json({
-      fromCurrency,
-      toCurrency,
-      rate: convertedRate,
-      lastUpdated: new Date().toISOString(),
-    });
+      { status: 503 }
+    );
   } catch (error) {
-    console.error('Exchange Rate API Error:', error);
+    console.error('Exchange rate proxy error:', error);
 
     // API 실패 시 기본값 반환 (백업)
     return NextResponse.json({

@@ -1,13 +1,6 @@
 // src/app/hooks/useExchangeRate.ts
+import { getExchangeRate } from '@/app/api';
 import { useEffect, useState } from 'react';
-
-interface ExchangeRateData {
-  fromCurrency: string;
-  toCurrency: string;
-  rate: number;
-  lastUpdated: string;
-  isFallback?: boolean;
-}
 
 export function useExchangeRate() {
   const [exchangeRate, setExchangeRate] = useState<number>(1350);
@@ -20,15 +13,7 @@ export function useExchangeRate() {
     setError(null);
 
     try {
-      // 항상 Next 내부 API로 호출 (서버에서 외부 백엔드 프록시)
-      const response = await fetch('/api/exchange-rate?from=KRW&to=USD');
-
-      if (!response.ok) {
-        throw new Error('Failed to fetch exchange rate');
-      }
-
-      const data: ExchangeRateData = await response.json();
-
+      const data = await getExchangeRate('KRW', 'USD');
       setExchangeRate(data.rate);
       setLastUpdated(data.lastUpdated);
 

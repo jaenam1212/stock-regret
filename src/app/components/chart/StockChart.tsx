@@ -1,14 +1,14 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
-import { 
-  createChart, 
-  IChartApi,
+import {
   CandlestickData,
-  UTCTimestamp,
+  CandlestickSeries,
+  IChartApi,
   ISeriesApi,
-  CandlestickSeries
+  UTCTimestamp,
+  createChart,
 } from 'lightweight-charts';
+import { useEffect, useRef } from 'react';
 
 interface StockChartProps {
   data: Array<{
@@ -18,9 +18,15 @@ interface StockChartProps {
     low: number;
     close: number;
   }>;
+  onDateSelect?: (date: string, price: number) => void;
+  selectedDate?: string;
 }
 
-export default function StockChart({ data }: StockChartProps) {
+export default function StockChart({
+  data,
+  onDateSelect,
+  selectedDate,
+}: StockChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
@@ -30,15 +36,16 @@ export default function StockChart({ data }: StockChartProps) {
 
     const handleResize = () => {
       if (chartRef.current && chartContainerRef.current) {
-        chartRef.current.applyOptions({ 
-          width: chartContainerRef.current.clientWidth 
+        chartRef.current.applyOptions({
+          width: chartContainerRef.current.clientWidth,
+          height: chartContainerRef.current.clientHeight,
         });
       }
     };
 
     const chart = createChart(chartContainerRef.current, {
       width: chartContainerRef.current.clientWidth,
-      height: 500,
+      height: chartContainerRef.current.clientHeight,
       layout: {
         background: { color: '#0a0a0a' },
         textColor: '#ffffff',
@@ -86,13 +93,27 @@ export default function StockChart({ data }: StockChartProps) {
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
 
+    // 차트 클릭 이벤트 처리
+    if (onDateSelect) {
+      chart.subscribeClick((param) => {
+        if (param.time && param.seriesData) {
+          const candlestickData = param.seriesData.get(seriesRef.current!);
+          if (candlestickData && 'close' in candlestickData) {
+            const timestamp = Number(param.time);
+            const date = new Date(timestamp * 1000).toISOString().split('T')[0];
+            onDateSelect(date, candlestickData.close);
+          }
+        }
+      });
+    }
+
     // 반응형 처리
     window.addEventListener('resize', handleResize);
-    
-    const resizeObserver = new ResizeObserver(entries => {
+
+    const resizeObserver = new ResizeObserver((entries) => {
       if (entries.length > 0) {
-        const { width } = entries[0].contentRect;
-        chart.applyOptions({ width });
+        const { width, height } = entries[0].contentRect;
+        chart.applyOptions({ width, height });
       }
     });
 
@@ -107,16 +128,16 @@ export default function StockChart({ data }: StockChartProps) {
 
   useEffect(() => {
     if (seriesRef.current && data.length > 0) {
-      const formattedData: CandlestickData[] = data.map(item => ({
+      const formattedData: CandlestickData[] = data.map((item) => ({
         time: Number(item.time) as UTCTimestamp,
         open: item.open,
         high: item.high,
         low: item.low,
         close: item.close,
       }));
-      
+
       seriesRef.current.setData(formattedData);
-      
+
       // 차트 자동 스케일 조정
       if (chartRef.current) {
         chartRef.current.timeScale().fitContent();
@@ -125,12 +146,24 @@ export default function StockChart({ data }: StockChartProps) {
   }, [data]);
 
   return (
-    <div className="relative w-full">
-      <div ref={chartContainerRef} className="w-full h-[300px] sm:h-[400px] lg:h-[500px]" />
+    <div className="relative w-full h-full">
+      <div ref={chartContainerRef} className="w-full h-full" />
       {/* 차트 컨트롤 힌트 */}
       <div className="absolute top-2 right-2 bg-gray-900/80 px-2 py-1 rounded text-xs text-gray-400">
         마우스 드래그: 이동 | 스크롤: 확대/축소
       </div>
+      {/* 날짜 선택 힌트 */}
+      {onDateSelect && (
+        <div className="absolute top-2 left-2 bg-blue-600/80 px-2 py-1 rounded text-xs text-white">
+          날짜 클릭: 선택
+        </div>
+      )}
+      {/* 선택된 날짜 표시 */}
+      {selectedDate && (
+        <div className="absolute bottom-2 left-2 bg-green-600/80 px-2 py-1 rounded text-xs text-white">
+          선택: {selectedDate}
+        </div>
+      )}
     </div>
   );
 }
