@@ -3,6 +3,7 @@
 import { useAuth } from '@/app/hooks/useAuth';
 import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
 import { useExchangeRate } from '@/app/hooks/useExchangeRate';
+import { formatPrice } from '@/app/lib/utils';
 import { CalculationResult, StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 import CalculationResults from './CalculationResults';
@@ -73,15 +74,13 @@ export default function RegretCalculator({
     const pastPrice = closestData.close;
     const currentPrice = stockInfo.currentPrice;
 
-    // 환율 적용 (한국 원화 -> 달러 주식)
-    const investAmountUSD = investAmount / exchangeRate;
+    const isUSD = stockInfo.meta.currency === 'USD';
+    const rate = isUSD ? exchangeRate : 1;
 
-    // 주식 수 계산
-    const shares = investAmountUSD / pastPrice;
-
-    // 현재 가치 계산 (달러 -> 원화)
-    const currentValueUSD = shares * currentPrice;
-    const currentValue = currentValueUSD * exchangeRate;
+    const investBase = isUSD ? investAmount / rate : investAmount;
+    const shares = investBase / pastPrice;
+    const currentValueBase = shares * currentPrice;
+    const currentValue = isUSD ? currentValueBase * rate : currentValueBase;
 
     // 손익 계산
     const profit = currentValue - investAmount;
@@ -104,9 +103,9 @@ export default function RegretCalculator({
     console.log('계산 디버깅:', {
       pastPrice,
       currentPrice,
-      investAmountUSD,
+      investBase,
       shares,
-      currentValueUSD,
+      currentValueBase,
       currentValue,
       profit,
       profitPercent,
@@ -155,7 +154,8 @@ export default function RegretCalculator({
               차트에서 선택된 날짜
             </div>
             <div className="text-lg font-semibold text-blue-300">
-              {selectedDate} - ${selectedPrice.toFixed(2)}
+              {selectedDate} -
+              {formatPrice(selectedPrice, stockInfo.meta.currency)}
             </div>
           </div>
         )}
@@ -164,6 +164,7 @@ export default function RegretCalculator({
           investDate={investDate}
           investAmount={investAmount}
           currentPrice={stockInfo.currentPrice}
+          currency={stockInfo.meta.currency}
           minDate={minDate}
           maxDate={maxDate}
           exchangeRate={exchangeRate}
@@ -175,7 +176,10 @@ export default function RegretCalculator({
 
         {calculation && (
           <div>
-            <CalculationResults calculation={calculation} />
+            <CalculationResults
+              calculation={calculation}
+              currency={stockInfo.meta.currency}
+            />
             {user && (
               <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">
                 <div className="flex items-center justify-between">
