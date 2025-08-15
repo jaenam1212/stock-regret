@@ -28,8 +28,9 @@ export async function GET(request: NextRequest) {
     // 백엔드가 없으면 기본 에러 응답
     return NextResponse.json(
       {
-        error: 'Backend service not available',
+        error: '미국 주식 데이터 서비스를 사용할 수 없습니다',
         details: 'External API not configured',
+        suggestion: '백엔드 서버가 실행 중인지 확인하거나 관리자에게 문의하세요',
       },
       { status: 503 }
     );
@@ -37,8 +38,9 @@ export async function GET(request: NextRequest) {
     console.error('Stock data proxy error:', error);
     return NextResponse.json(
       {
-        error: 'Failed to fetch stock data',
+        error: '미국 주식 데이터를 가져올 수 없습니다',
         details: error instanceof Error ? error.message : 'Unknown error',
+        suggestion: '주식 심볼이 올바른지 확인하세요 (예: AAPL, NVDA)',
       },
       { status: 500 }
     );

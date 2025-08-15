@@ -47,40 +47,42 @@ export default function StockChart({
       width: chartContainerRef.current.clientWidth,
       height: chartContainerRef.current.clientHeight,
       layout: {
-        background: { color: '#0a0a0a' },
-        textColor: '#ffffff',
+        background: { color: 'transparent' },
+        textColor: '#e5e7eb',
       },
       grid: {
-        vertLines: { color: '#1a1a1a' },
-        horzLines: { color: '#1a1a1a' },
+        vertLines: { color: '#374151' },
+        horzLines: { color: '#374151' },
       },
       crosshair: {
         mode: 1,
         vertLine: {
           width: 1,
-          color: 'rgba(224, 227, 235, 0.1)',
+          color: 'rgba(156, 163, 175, 0.5)',
           style: 0,
         },
         horzLine: {
           visible: true,
           labelVisible: true,
+          color: 'rgba(156, 163, 175, 0.5)',
         },
       },
       rightPriceScale: {
-        borderColor: '#333333',
+        borderColor: '#4b5563',
         visible: true,
+        textColor: '#d1d5db',
       },
       timeScale: {
-        borderColor: '#333333',
+        borderColor: '#4b5563',
         timeVisible: true,
         secondsVisible: false,
+        textColor: '#d1d5db',
       },
       handleScroll: {
         vertTouchDrag: false,
       },
     });
 
-    // 최신 API에 맞게 수정 - CandlestickSeries 임포트해서 사용
     const candlestickSeries = chart.addSeries(CandlestickSeries, {
       upColor: '#4ade80',
       downColor: '#ef4444',

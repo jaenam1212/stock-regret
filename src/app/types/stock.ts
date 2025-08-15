@@ -41,3 +41,11 @@ export interface CandlestickData {
   low: number;
   close: number;
 }
+
+export type MarketType = 'us' | 'kr' | 'crypto';
+
+export interface MarketTab {
+  id: MarketType;
+  label: string;
+  searchPlaceholder: string;
+}
