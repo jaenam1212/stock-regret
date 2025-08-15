@@ -8,12 +8,13 @@ export function formatCurrency(value: number): string {
   }).format(value);
 }
 
-export function formatUSD(value: number): string {
-  return new Intl.NumberFormat('en-US', {
+export function formatPrice(value: number, currency: string): string {
+  const isKRW = currency === 'KRW';
+  return new Intl.NumberFormat(isKRW ? 'ko-KR' : 'en-US', {
     style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    currency,
+    minimumFractionDigits: isKRW ? 0 : 2,
+    maximumFractionDigits: isKRW ? 0 : 2,
   }).format(value);
 }
 

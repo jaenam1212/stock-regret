@@ -1,11 +1,12 @@
 'use client';
 
-import { formatUSD } from '@/app/lib/utils';
+import { formatPrice } from '@/app/lib/utils';
 
 interface CalculatorInputProps {
   investDate: string;
   investAmount: number;
   currentPrice: number;
+  currency: string;
   minDate: string;
   maxDate: string;
   exchangeRate?: number;
@@ -19,6 +20,7 @@ export default function CalculatorInput({
   investDate,
   investAmount,
   currentPrice,
+  currency,
   minDate,
   maxDate,
   exchangeRate,
@@ -64,36 +66,38 @@ export default function CalculatorInput({
         </label>
         <input
           type="text"
-          value={formatUSD(currentPrice)}
+          value={formatPrice(currentPrice, currency)}
           readOnly
           className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
                      text-gray-400 cursor-not-allowed"
         />
       </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">
-          환율 (KRW/USD)
-        </label>
-        <div className="relative">
-          <input
-            type="text"
-            value={
-              exchangeRateLoading
-                ? '로딩 중...'
-                : `₩${exchangeRate?.toLocaleString() || '1,350'}`
-            }
-            readOnly
-            className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
-                       text-gray-400 cursor-not-allowed"
-          />
-          {exchangeRateLoading && (
-            <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-            </div>
-          )}
+      {currency === 'USD' && (
+        <div>
+          <label className="block text-sm font-medium text-gray-400 mb-2">
+            환율 (KRW/USD)
+          </label>
+          <div className="relative">
+            <input
+              type="text"
+              value={
+                exchangeRateLoading
+                  ? '로딩 중...'
+                  : `₩${exchangeRate?.toLocaleString() || '1,350'}`
+              }
+              readOnly
+              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
+                         text-gray-400 cursor-not-allowed"
+            />
+            {exchangeRateLoading && (
+              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
+      )}
 
       <div className="flex items-end">
         <button

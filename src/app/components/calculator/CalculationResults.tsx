@@ -1,14 +1,16 @@
 'use client';
 
-import { formatCurrency, formatUSD } from '@/app/lib/utils';
+import { formatCurrency, formatPrice } from '@/app/lib/utils';
 import { CalculationResult } from '@/types/stock';
 
 interface CalculationResultsProps {
   calculation: CalculationResult;
+  currency: string;
 }
 
 export default function CalculationResults({
   calculation,
+  currency,
 }: CalculationResultsProps) {
   const isProfit = calculation.profit >= 0;
 
@@ -55,14 +57,14 @@ export default function CalculationResults({
         <ResultCard
           label="구매 가능했던 주식"
           value={`${calculation.shares.toFixed(2)}주`}
-          subtext={`@${formatUSD(calculation.pastPrice)}`}
+          subtext={`@${formatPrice(calculation.pastPrice, currency)}`}
         />
 
         <ResultCard
           label="현재 가치"
           value={formatCurrency(calculation.currentValue)}
           valueColor="text-white"
-          subtext={`@${formatUSD(calculation.currentPrice)}`}
+          subtext={`@${formatPrice(calculation.currentPrice, currency)}`}
           isBold
         />
 

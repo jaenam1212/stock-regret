@@ -2,7 +2,7 @@
 
 import { useAuth } from '@/app/hooks/useAuth';
 import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
-import { formatCurrency, formatUSD } from '@/app/lib/utils';
+import { formatCurrency, formatPrice } from '@/app/lib/utils';
 import { CalculationHistory } from '@/lib/supabase';
 import { useState } from 'react';
 
@@ -122,14 +122,22 @@ function HistoryCard({ item, onDelete, isDeleting }: HistoryCardProps) {
           <p className="text-sm text-gray-400">투자 금액</p>
           <p className="font-semibold">{formatCurrency(item.invest_amount)}</p>
         </div>
-        <div>
-          <p className="text-sm text-gray-400">구매 가격</p>
-          <p className="font-semibold">{formatUSD(item.past_price)}</p>
-        </div>
-        <div>
-          <p className="text-sm text-gray-400">현재 가격</p>
-          <p className="font-semibold">{formatUSD(item.current_price)}</p>
-        </div>
+        {(() => {
+          const isKorean = /^\d{6}$/.test(item.symbol);
+          const currency = isKorean ? 'KRW' : 'USD';
+          return (
+            <>
+              <div>
+                <p className="text-sm text-gray-400">구매 가격</p>
+                <p className="font-semibold">{formatPrice(item.past_price, currency)}</p>
+              </div>
+              <div>
+                <p className="text-sm text-gray-400">현재 가격</p>
+                <p className="font-semibold">{formatPrice(item.current_price, currency)}</p>
+              </div>
+            </>
+          );
+        })()}
         <div>
           <p className="text-sm text-gray-400">손익</p>
           <p

@@ -1,7 +1,7 @@
 'use client';
 
 import { checkBackendHealth } from '@/app/api';
-import { formatUSD } from '@/app/lib/utils';
+import { formatPrice } from '@/app/lib/utils';
 import { StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 
@@ -61,7 +61,7 @@ export default function StockHeader({
 
           <div className="flex items-center gap-4 mt-2">
             <span className="text-2xl lg:text-3xl font-semibold">
-              {formatUSD(stockInfo.currentPrice)}
+              {formatPrice(stockInfo.currentPrice, stockInfo.meta.currency)}
             </span>
             <div
               className={`flex items-center gap-2 px-3 py-1 rounded-lg ${
@@ -72,7 +72,9 @@ export default function StockHeader({
             >
               <span className="text-sm lg:text-base font-medium">
                 {stockInfo.change >= 0 ? '↑' : '↓'}
-                {Math.abs(stockInfo.change).toFixed(2)}
+                {Math.abs(stockInfo.change).toFixed(
+                  stockInfo.meta.currency === 'KRW' ? 0 : 2
+                )}
               </span>
               <span className="text-sm lg:text-base">
                 ({stockInfo.changePercent >= 0 ? '+' : ''}
