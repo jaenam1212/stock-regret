@@ -124,10 +124,11 @@ export default function SearchAutocomplete({
 
   // 아이템 선택 처리
   const handleSelectItem = (item: SearchItem) => {
-    console.log('선택된 아이템:', item.name, '심볼:', item.symbol);
-    console.log('onChange 함수 호출 전, 현재 value:', value);
+    // 개발 환경에서만 로깅
+    if (process.env.NODE_ENV === 'development') {
+      console.log('선택된 아이템:', item.name, '심볼:', item.symbol);
+    }
     onChange(item.name); // 인풋창에 회사명 표시
-    console.log('onChange 함수 호출 후');
     setIsOpen(false);
     setSelectedIndex(-1);
     // 실제 검색은 심볼로 실행

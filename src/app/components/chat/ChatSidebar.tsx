@@ -135,13 +135,15 @@ export default function ChatSidebar({ symbol }: ChatSidebarProps) {
 
   return (
     <>
-      {/* 토글 버튼 - 상단 우측 */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed top-4 right-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg transition-colors"
-      >
-        {isOpen ? '✕' : '💬'}
-      </button>
+      {/* 토글 버튼 - 상단 좌측 (채팅방이 닫혀있을 때만 표시) */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed top-4 left-4 z-50 bg-blue-600 hover:bg-blue-700 text-white p-2 rounded-lg shadow-lg transition-colors"
+        >
+          💬
+        </button>
+      )}
 
       {/* 사이드바 */}
       {isOpen && (

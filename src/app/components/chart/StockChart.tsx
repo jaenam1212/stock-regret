@@ -115,11 +115,17 @@ export default function StockChart({
     const resizeObserver = new ResizeObserver((entries) => {
       if (entries.length > 0) {
         const { width, height } = entries[0].contentRect;
-        chart.applyOptions({ width, height });
+        if (width > 0 && height > 0) {
+          requestAnimationFrame(() => {
+            chart.applyOptions({ width, height });
+          });
+        }
       }
     });
 
-    resizeObserver.observe(chartContainerRef.current);
+    if (chartContainerRef.current) {
+      resizeObserver.observe(chartContainerRef.current);
+    }
 
     return () => {
       window.removeEventListener('resize', handleResize);

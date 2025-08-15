@@ -1,27 +1,12 @@
 import { createClient } from '@supabase/supabase-js';
+import { envValidator } from './env';
 
-// 환경변수가 제대로 설정되어 있는지 확인
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// 환경변수 검증된 설정 사용
+const supabaseUrl = envValidator.getSupabaseUrl();
+const supabaseAnonKey = envValidator.getSupabaseAnonKey();
 
-// 환경변수가 없으면 경고 출력
-if (!supabaseUrl || !supabaseAnonKey) {
-  console.warn('Supabase 환경변수가 설정되지 않았습니다.');
-  console.warn(
-    'NEXT_PUBLIC_SUPABASE_URL:',
-    supabaseUrl ? '설정됨' : '설정되지 않음'
-  );
-  console.warn(
-    'NEXT_PUBLIC_SUPABASE_ANON_KEY:',
-    supabaseAnonKey ? '설정됨' : '설정되지 않음'
-  );
-}
-
-// 환경변수가 없으면 null 반환
-export const supabase =
-  supabaseUrl && supabaseAnonKey
-    ? createClient(supabaseUrl, supabaseAnonKey)
-    : null;
+// Supabase 클라이언트 생성
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 // 데이터베이스 타입 정의
 export interface User {
