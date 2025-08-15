@@ -2,21 +2,22 @@
 
 import { checkBackendHealth } from '@/app/api';
 import { formatPrice } from '@/app/lib/utils';
-import { StockInfo } from '@/types/stock';
+import { StockInfo, MarketType } from '@/types/stock';
 import { useEffect, useState } from 'react';
 
 interface StockHeaderProps {
   stockInfo: StockInfo;
   symbol: string;
+  marketType: MarketType;
   onSymbolChange: (symbol: string) => void;
 }
 
 export default function StockHeader({
   stockInfo,
   symbol,
+  marketType,
   onSymbolChange,
 }: StockHeaderProps) {
-  const [inputSymbol, setInputSymbol] = useState(symbol);
   const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
 
   useEffect(() => {
@@ -39,10 +40,12 @@ export default function StockHeader({
     };
   }, []);
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (inputSymbol.trim()) {
-      onSymbolChange(inputSymbol.toUpperCase());
+  const getMarketLabel = (type: MarketType) => {
+    switch (type) {
+      case 'us': return '미국주식';
+      case 'kr': return '한국주식';
+      case 'crypto': return '암호화폐';
+      default: return '';
     }
   };
 
@@ -56,6 +59,9 @@ export default function StockHeader({
             </h2>
             <span className="text-sm lg:text-base text-gray-400">
               {stockInfo.meta.companyName}
+            </span>
+            <span className="text-xs px-2 py-1 bg-blue-500/10 text-blue-400 border border-blue-500/20 rounded">
+              {getMarketLabel(marketType)}
             </span>
           </div>
 
@@ -102,24 +108,6 @@ export default function StockHeader({
             </span>
           </div>
         </div>
-
-        <form onSubmit={handleSubmit} className="flex gap-2">
-          <input
-            type="text"
-            value={inputSymbol}
-            onChange={(e) => setInputSymbol(e.target.value.toUpperCase())}
-            placeholder="NVDA"
-            className="px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white
-                     focus:border-blue-500 focus:outline-none transition-colors w-24"
-          />
-          <button
-            type="submit"
-            className="px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg font-medium
-                     transition-colors focus:outline-none focus:ring-2 focus:ring-blue-500"
-          >
-            검색
-          </button>
-        </form>
       </div>
     </div>
   );
