@@ -40,7 +40,7 @@ export async function GET(request: NextRequest) {
         close: Number((adjclose[index] || quotes.close?.[index] || 0).toFixed(0)),
         volume: quotes.volume?.[index] || 0,
       }))
-      .filter(item => item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0);
+      .filter((item: any) => item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0);
 
     const latest = data[data.length - 1];
     const prev = data[data.length - 2] || latest;
