@@ -1,5 +1,9 @@
 'use client';
 
+// 빌드 타임 정적 생성 방지
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 import { useAuth } from '@/app/hooks/useAuth';
 import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
 import { formatCurrency, formatPrice } from '@/app/lib/utils';
