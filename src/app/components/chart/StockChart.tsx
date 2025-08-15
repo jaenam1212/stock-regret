@@ -76,7 +76,6 @@ export default function StockChart({
         borderColor: '#4b5563',
         timeVisible: true,
         secondsVisible: false,
-        textColor: '#d1d5db',
       },
       handleScroll: {
         vertTouchDrag: false,
