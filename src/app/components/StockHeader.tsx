@@ -2,7 +2,7 @@
 
 import { checkBackendHealth } from '@/app/api';
 import { formatPrice } from '@/app/lib/utils';
-import { StockInfo, MarketType } from '@/types/stock';
+import { MarketType, StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 
 interface StockHeaderProps {
@@ -42,10 +42,14 @@ export default function StockHeader({
 
   const getMarketLabel = (type: MarketType) => {
     switch (type) {
-      case 'us': return '미국주식';
-      case 'kr': return '한국주식';
-      case 'crypto': return '암호화폐';
-      default: return '';
+      case 'us':
+        return '미국주식';
+      case 'kr':
+        return '한국주식';
+      case 'crypto':
+        return '암호화폐';
+      default:
+        return '';
     }
   };
 
@@ -87,25 +91,6 @@ export default function StockHeader({
                 {stockInfo.changePercent.toFixed(2)}%)
               </span>
             </div>
-
-            {/* 백엔드 연결 상태 배지 */}
-            <span
-              className={`text-xs px-2 py-1 rounded border ${
-                apiHealthy === null
-                  ? 'bg-gray-500/10 text-gray-300 border-gray-700/40'
-                  : apiHealthy
-                    ? 'bg-emerald-500/10 text-emerald-400 border-emerald-700/40'
-                    : 'bg-red-500/10 text-red-400 border-red-700/40'
-              }`}
-              title="백엔드 연결 상태"
-            >
-              API{' '}
-              {apiHealthy === null
-                ? '(checking...)'
-                : apiHealthy
-                  ? '(online)'
-                  : '(offline)'}
-            </span>
           </div>
         </div>
       </div>
