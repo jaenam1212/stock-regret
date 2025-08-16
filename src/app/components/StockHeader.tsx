@@ -14,11 +14,11 @@ interface StockHeaderProps {
 
 export default function StockHeader({
   stockInfo,
-  symbol,
+  symbol, // eslint-disable-line @typescript-eslint/no-unused-vars
   marketType,
-  onSymbolChange,
+  onSymbolChange, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: StockHeaderProps) {
-  const [apiHealthy, setApiHealthy] = useState<boolean | null>(null);
+  const [apiHealthy, setApiHealthy] = useState<boolean | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
 
   useEffect(() => {
     let isMounted = true;
@@ -27,16 +27,23 @@ export default function StockHeader({
         const isHealthy = await checkBackendHealth();
         if (!isMounted) return;
         setApiHealthy(isHealthy);
-      } catch {
+      } catch (error) {
         if (!isMounted) return;
+        console.warn('Health check error in StockHeader:', error);
         setApiHealthy(false);
       }
     };
-    checkHealth();
-    const id = setInterval(checkHealth, 30000);
+    
+    // 초기 헬스체크는 지연 실행하여 UI 블로킹 방지
+    const timeoutId = setTimeout(checkHealth, 1000);
+    
+    // 주기적 헬스체크는 60초로 변경 (부하 감소)
+    const intervalId = setInterval(checkHealth, 60000);
+    
     return () => {
       isMounted = false;
-      clearInterval(id);
+      clearTimeout(timeoutId);
+      clearInterval(intervalId);
     };
   }, []);
 

@@ -16,12 +16,12 @@ export const checkBackendHealth = async (): Promise<boolean> => {
       return true;
     }
 
-    const response = await apiClient.get(`${apiBase.replace(/\/$/, '')}/`, {
-      timeout: 5000,
+    const response = await apiClient.get(`${apiBase.replace(/\/$/, '')}/health`, {
+      timeout: 10000,
     });
     return response.status === 200;
   } catch (error) {
-    console.error('Backend health check failed:', error);
+    console.warn('Backend health check failed:', error instanceof Error ? error.message : 'Unknown error');
     return false;
   }
 };

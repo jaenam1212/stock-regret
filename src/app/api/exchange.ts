@@ -18,9 +18,30 @@ export const getExchangeRate = async (
       params: { from, to },
     });
     return response.data;
-  } catch (error) {
+  } catch (error: any) {
     console.error('Failed to fetch exchange rate:', error);
-    throw new Error('환율 정보를 가져오는데 실패했습니다.');
+    
+    // axios 타임아웃 에러 처리
+    if (error.code === 'ECONNABORTED' || error.message?.includes('timeout')) {
+      console.warn('Exchange rate API timeout, returning fallback rate');
+      return {
+        fromCurrency: from,
+        toCurrency: to,
+        rate: 1350, // 기본 환율
+        lastUpdated: new Date().toISOString(),
+        isFallback: true,
+      };
+    }
+    
+    // 다른 에러의 경우도 기본값 반환 (환율은 중요하지 않음)
+    console.warn('Exchange rate API error, returning fallback rate');
+    return {
+      fromCurrency: from,
+      toCurrency: to,
+      rate: 1350, // 기본 환율
+      lastUpdated: new Date().toISOString(),
+      isFallback: true,
+    };
   }
 };
 

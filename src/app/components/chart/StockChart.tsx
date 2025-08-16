@@ -8,7 +8,7 @@ import {
   UTCTimestamp,
   createChart,
 } from 'lightweight-charts';
-import { useEffect, useRef } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 
 interface StockChartProps {
   data: Array<{
@@ -31,6 +31,19 @@ export default function StockChart({
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
 
+  // 차트 클릭 핸들러를 안정화
+  const handleChartClick = useCallback((param: any) => {
+    if (onDateSelect && param.time && param.seriesData && seriesRef.current) {
+      const candlestickData = param.seriesData.get(seriesRef.current);
+      if (candlestickData && 'close' in candlestickData) {
+        const timestamp = Number(param.time);
+        const date = new Date(timestamp * 1000).toISOString().split('T')[0];
+        onDateSelect(date, candlestickData.close);
+      }
+    }
+  }, [onDateSelect]);
+
+  // 차트 생성 (한 번만 실행)
   useEffect(() => {
     if (!chartContainerRef.current) return;
 
@@ -94,20 +107,6 @@ export default function StockChart({
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
 
-    // 차트 클릭 이벤트 처리
-    if (onDateSelect) {
-      chart.subscribeClick((param) => {
-        if (param.time && param.seriesData) {
-          const candlestickData = param.seriesData.get(seriesRef.current!);
-          if (candlestickData && 'close' in candlestickData) {
-            const timestamp = Number(param.time);
-            const date = new Date(timestamp * 1000).toISOString().split('T')[0];
-            onDateSelect(date, candlestickData.close);
-          }
-        }
-      });
-    }
-
     // 반응형 처리
     window.addEventListener('resize', handleResize);
 
@@ -115,9 +114,7 @@ export default function StockChart({
       if (entries.length > 0) {
         const { width, height } = entries[0].contentRect;
         if (width > 0 && height > 0) {
-          requestAnimationFrame(() => {
-            chart.applyOptions({ width, height });
-          });
+          chart.applyOptions({ width, height });
         }
       }
     });
@@ -131,7 +128,20 @@ export default function StockChart({
       resizeObserver.disconnect();
       chart.remove();
     };
-  }, []);
+  }, []); // 의존성을 빈 배열로 변경
+
+  // 클릭 이벤트 핸들러 등록 (별도로 관리)
+  useEffect(() => {
+    if (chartRef.current && onDateSelect) {
+      chartRef.current.subscribeClick(handleChartClick);
+      
+      return () => {
+        if (chartRef.current) {
+          chartRef.current.unsubscribeClick(handleChartClick);
+        }
+      };
+    }
+  }, [handleChartClick, onDateSelect]);
 
   useEffect(() => {
     if (seriesRef.current && data.length > 0) {
@@ -151,6 +161,18 @@ export default function StockChart({
       }
     }
   }, [data]);
+
+  // 데이터가 없을 때 로딩 상태 표시
+  if (!data || data.length === 0) {
+    return (
+      <div className="w-full h-full flex items-center justify-center bg-gray-900/50 rounded-lg">
+        <div className="text-center">
+          <div className="w-8 h-8 border-2 border-gray-600 border-t-blue-500 rounded-full animate-spin mx-auto mb-2"></div>
+          <p className="text-gray-400 text-sm">차트 데이터 로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="relative w-full h-full">

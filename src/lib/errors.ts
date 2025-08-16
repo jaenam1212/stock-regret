@@ -105,34 +105,42 @@ export function createError(
 /**
  * Supabase 에러를 표준 에러로 변환
  */
-export function handleSupabaseError(error: any): StockRegretError {
+export function handleSupabaseError(error: unknown): StockRegretError {
   if (!error) {
     return createError(ERROR_CODES.UNKNOWN_ERROR);
   }
 
   // Supabase 에러 코드 매핑
-  switch (error.message) {
+  const errorMessage = typeof error === 'object' && error !== null && 'message' in error 
+    ? (error as { message: string }).message 
+    : String(error);
+    
+  switch (errorMessage) {
     case 'Invalid login credentials':
-      return createError(ERROR_CODES.AUTH_INVALID_CREDENTIALS, error.message, 401);
+      return createError(ERROR_CODES.AUTH_INVALID_CREDENTIALS, errorMessage, 401);
     
     case 'User already registered':
-      return createError(ERROR_CODES.AUTH_EMAIL_ALREADY_EXISTS, error.message, 409);
+      return createError(ERROR_CODES.AUTH_EMAIL_ALREADY_EXISTS, errorMessage, 409);
     
     case 'Password should be at least 6 characters':
-      return createError(ERROR_CODES.AUTH_WEAK_PASSWORD, error.message, 400);
+      return createError(ERROR_CODES.AUTH_WEAK_PASSWORD, errorMessage, 400);
     
     case 'Unable to validate email address: invalid format':
-      return createError(ERROR_CODES.AUTH_INVALID_EMAIL, error.message, 400);
+      return createError(ERROR_CODES.AUTH_INVALID_EMAIL, errorMessage, 400);
     
     default:
-      if (error.message.includes('JWT')) {
-        return createError(ERROR_CODES.AUTH_SESSION_EXPIRED, error.message, 401);
+      if (errorMessage.includes('JWT')) {
+        return createError(ERROR_CODES.AUTH_SESSION_EXPIRED, errorMessage, 401);
       }
+      
+      const status = typeof error === 'object' && error !== null && 'status' in error 
+        ? (error as { status: number }).status 
+        : 500;
       
       return createError(
         ERROR_CODES.UNKNOWN_ERROR,
-        error.message,
-        error.status || 500
+        errorMessage,
+        status
       );
   }
 }
@@ -140,7 +148,7 @@ export function handleSupabaseError(error: any): StockRegretError {
 /**
  * Fetch API 에러를 표준 에러로 변환
  */
-export function handleFetchError(error: any, url?: string): StockRegretError {
+export function handleFetchError(error: unknown, url?: string): StockRegretError {
   if (error instanceof TypeError && error.message.includes('fetch')) {
     return createError(
       ERROR_CODES.NETWORK_ERROR,
@@ -149,7 +157,7 @@ export function handleFetchError(error: any, url?: string): StockRegretError {
     );
   }
 
-  if (error.name === 'AbortError') {
+  if (error instanceof Error && error.name === 'AbortError') {
     return createError(
       ERROR_CODES.API_EXTERNAL_SERVICE_ERROR,
       '요청이 시간 초과되었습니다.',
@@ -157,9 +165,10 @@ export function handleFetchError(error: any, url?: string): StockRegretError {
     );
   }
 
+  const message = error instanceof Error ? error.message : '외부 API 호출 중 오류가 발생했습니다.';
   return createError(
     ERROR_CODES.API_EXTERNAL_SERVICE_ERROR,
-    error.message || '외부 API 호출 중 오류가 발생했습니다.',
+    message,
     500
   );
 }

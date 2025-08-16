@@ -8,20 +8,28 @@ export async function GET(request: NextRequest) {
     // Yahoo Finance API를 사용하여 한국 주식 데이터 가져오기
     const yahooSymbol = `${symbol}.KS`; // KS는 한국거래소
     const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=0&period2=9999999999&interval=1d`;
-    
-    const res = await fetch(yahooUrl, { 
+
+    // AbortController로 타임아웃 설정 (10초)
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+    const res = await fetch(yahooUrl, {
       headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        'User-Agent':
+          'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
       },
-      cache: 'no-store' 
+      cache: 'no-store',
+      signal: controller.signal,
     });
-    
+
+    clearTimeout(timeoutId);
+
     if (!res.ok) {
       throw new Error(`Failed to fetch data: ${res.status}`);
     }
-    
+
     const yahooData = await res.json();
-    
+
     if (!yahooData.chart?.result?.[0]) {
       throw new Error('No data found for symbol');
     }
@@ -37,16 +45,22 @@ export async function GET(request: NextRequest) {
         open: Number((quotes.open?.[index] || 0).toFixed(0)),
         high: Number((quotes.high?.[index] || 0).toFixed(0)),
         low: Number((quotes.low?.[index] || 0).toFixed(0)),
-        close: Number((adjclose[index] || quotes.close?.[index] || 0).toFixed(0)),
+        close: Number(
+          (adjclose[index] || quotes.close?.[index] || 0).toFixed(0)
+        ),
         volume: quotes.volume?.[index] || 0,
       }))
-      .filter((item: any) => item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0);
+      .filter(
+        (item: any) =>
+          item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0
+      );
 
     const latest = data[data.length - 1];
     const prev = data[data.length - 2] || latest;
 
     // 회사명 가져오기
-    const companyName = result.meta?.longName || result.meta?.shortName || `${symbol} Corp.`;
+    const companyName =
+      result.meta?.longName || result.meta?.shortName || `${symbol} Corp.`;
 
     return NextResponse.json({
       symbol,
@@ -58,10 +72,22 @@ export async function GET(request: NextRequest) {
         companyName,
         currency: 'KRW',
         exchangeName: 'KRX',
-        lastUpdated: new Date().toISOString(),
+        lastUpdated: new Date(0).toISOString(),
       },
     });
   } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      console.error('KR stock data timeout:', error);
+      return NextResponse.json(
+        {
+          error: '한국 주식 데이터 요청 시간이 초과되었습니다',
+          details: '네트워크 연결을 확인하고 다시 시도해주세요',
+          suggestion: '주식 코드가 올바른지 확인하세요 (예: 005930)',
+        },
+        { status: 408 }
+      );
+    }
+    
     console.error('KR stock data error:', error);
     return NextResponse.json(
       {

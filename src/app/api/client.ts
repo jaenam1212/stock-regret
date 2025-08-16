@@ -13,7 +13,7 @@ const getBaseURL = () => {
 // 기본 axios 인스턴스 생성
 const apiClient = axios.create({
   baseURL: getBaseURL(),
-  timeout: 10000,
+  timeout: 15000, // 서버 타임아웃보다 길게 설정
   headers: {
     'Content-Type': 'application/json',
   },
@@ -38,11 +38,17 @@ apiClient.interceptors.response.use(
     return response;
   },
   (error) => {
-    console.error(
-      'API Response Error:',
-      error.response?.status,
-      error.response?.data
-    );
+    if (error.response) {
+      console.error(
+        'API Response Error:',
+        error.response.status,
+        error.response.data
+      );
+    } else if (error.request) {
+      console.error('API Network Error:', error.message);
+    } else {
+      console.error('API Request Setup Error:', error.message);
+    }
     return Promise.reject(error);
   }
 );

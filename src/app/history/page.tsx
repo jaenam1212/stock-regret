@@ -1,6 +1,30 @@
 'use client';
 
-// 빌드 타임 정적 생성 방지
+import Link from 'next/link';
+
+// 히스토리 페이지 비활성화됨
+export default function HistoryPage() {
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex items-center justify-center">
+      <div className="text-center">
+        <h1 className="text-2xl font-bold mb-4">현재 이용할 수 없습니다</h1>
+        <p className="text-gray-400">
+          히스토리 기능이 일시적으로 비활성화되었습니다.
+        </p>
+        <Link
+          href="/"
+          className="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
+        >
+          홈으로 돌아가기
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+/* 비활성화된 코드 - 디버깅 후 복원 필요시 사용
+'use client';
+
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
@@ -8,18 +32,22 @@ import { useAuth } from '@/app/hooks/useAuth';
 import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
 import { formatCurrency, formatPrice } from '@/app/lib/utils';
 import { CalculationHistory } from '@/lib/supabase';
+import Link from 'next/link';
 import { useState } from 'react';
 
 export default function HistoryPage() {
   const { user } = useAuth();
-  const { history, loading, error, deleteCalculation } = useCalculationHistory(
-    user?.id
-  );
+  const {
+    history = [],
+    loading,
+    error,
+    deleteCalculation,
+  } = useCalculationHistory(user?.id);
   const [deletingId, setDeletingId] = useState<string | null>(null);
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
-
+    if (typeof window !== 'undefined' && !confirm('정말 삭제하시겠습니까?'))
+      return;
     setDeletingId(id);
     try {
       await deleteCalculation(id);
@@ -43,22 +71,20 @@ export default function HistoryPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white">
-      {/* 헤더 */}
       <header className="border-b border-gray-800 bg-black/50 backdrop-blur-sm">
         <div className="container mx-auto px-4 py-3">
           <div className="flex items-center justify-between">
             <h1 className="text-2xl font-bold">계산 내역</h1>
-            <a
+            <Link
               href="/"
               className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-sm font-medium transition-colors"
             >
               홈으로
-            </a>
+            </Link>
           </div>
         </div>
       </header>
 
-      {/* 메인 컨텐츠 */}
       <main className="container mx-auto px-4 py-6">
         {loading ? (
           <div className="text-center py-12">
@@ -66,17 +92,17 @@ export default function HistoryPage() {
           </div>
         ) : error ? (
           <div className="text-center py-12">
-            <div className="text-red-400">에러: {error}</div>
+            <div className="text-red-400">에러: {String(error)}</div>
           </div>
         ) : history.length === 0 ? (
           <div className="text-center py-12">
             <div className="text-gray-400">아직 계산 내역이 없습니다.</div>
-            <a
+            <Link
               href="/"
               className="mt-4 inline-block px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-sm font-medium transition-colors"
             >
               계산해보기
-            </a>
+            </Link>
           </div>
         ) : (
           <div className="space-y-4">
@@ -103,7 +129,9 @@ interface HistoryCardProps {
 
 function HistoryCard({ item, onDelete, isDeleting }: HistoryCardProps) {
   const isProfit = item.profit >= 0;
-  const multiple = item.current_value / item.invest_amount;
+  const multiple = item.invest_amount
+    ? item.current_value / item.invest_amount
+    : 0;
 
   return (
     <div className="bg-gray-900/50 backdrop-blur-sm rounded-xl border border-gray-800 p-6">
@@ -133,11 +161,15 @@ function HistoryCard({ item, onDelete, isDeleting }: HistoryCardProps) {
             <>
               <div>
                 <p className="text-sm text-gray-400">구매 가격</p>
-                <p className="font-semibold">{formatPrice(item.past_price, currency)}</p>
+                <p className="font-semibold">
+                  {formatPrice(item.past_price, currency)}
+                </p>
               </div>
               <div>
                 <p className="text-sm text-gray-400">현재 가격</p>
-                <p className="font-semibold">{formatPrice(item.current_price, currency)}</p>
+                <p className="font-semibold">
+                  {formatPrice(item.current_price, currency)}
+                </p>
               </div>
             </>
           );
@@ -170,7 +202,9 @@ function HistoryCard({ item, onDelete, isDeleting }: HistoryCardProps) {
         <div>
           <p className="text-sm text-gray-400">연환산 수익률</p>
           <p
-            className={`font-semibold ${item.yearly_return >= 0 ? 'text-green-500' : 'text-red-500'}`}
+            className={`font-semibold ${
+              item.yearly_return >= 0 ? 'text-green-500' : 'text-red-500'
+            }`}
           >
             {item.yearly_return >= 0 ? '+' : ''}
             {item.yearly_return.toFixed(2)}%
@@ -180,3 +214,4 @@ function HistoryCard({ item, onDelete, isDeleting }: HistoryCardProps) {
     </div>
   );
 }
+*/

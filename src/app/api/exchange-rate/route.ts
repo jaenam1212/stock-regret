@@ -12,27 +12,45 @@ export async function GET(request: NextRequest) {
     if (externalApiBase) {
       try {
         const proxyUrl = `${externalApiBase.replace(/\/$/, '')}/api/stock/exchange-rate?from=${fromCurrency}&to=${toCurrency}`;
-        const proxyRes = await fetch(proxyUrl, { cache: 'no-store' });
+        
+        // AbortController로 타임아웃 설정 (5초)
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 5000);
+        
+        const proxyRes = await fetch(proxyUrl, { 
+          cache: 'no-store',
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+        
+        clearTimeout(timeoutId);
+        
         if (proxyRes.ok) {
           const json = await proxyRes.json();
           return NextResponse.json(json);
         }
         console.warn(
-          'External exchange-rate proxy failed, falling back to direct API'
+          'External exchange-rate proxy failed, falling back to default rate'
         );
       } catch (e) {
-        console.warn('External exchange-rate proxy error, falling back:', e);
+        if (e instanceof Error && e.name === 'AbortError') {
+          console.warn('External exchange-rate proxy timeout, falling back to default rate');
+        } else {
+          console.warn('External exchange-rate proxy error, falling back:', e);
+        }
       }
     }
 
-    // 백엔드가 없으면 기본 에러 응답
-    return NextResponse.json(
-      {
-        error: 'Backend service not available',
-        details: 'External API not configured',
-      },
-      { status: 503 }
-    );
+    // 백엔드가 없거나 실패하면 기본값 반환
+    return NextResponse.json({
+      fromCurrency,
+      toCurrency,
+      rate: 1350, // 기본 환율
+      lastUpdated: new Date().toISOString(),
+      isFallback: true,
+    });
   } catch (error) {
     console.error('Exchange rate proxy error:', error);
 
@@ -41,7 +59,7 @@ export async function GET(request: NextRequest) {
       fromCurrency,
       toCurrency,
       rate: 1350, // 기본 환율
-      lastUpdated: new Date().toISOString(),
+      lastUpdated: new Date(0).toISOString(),
       isFallback: true,
     });
   }

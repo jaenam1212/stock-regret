@@ -128,18 +128,18 @@ export default function RegretCalculator({
     setCalculation(result);
     setSaved(false);
 
-    // 로그인된 사용자인 경우 계산 내역 저장
-    if (user && saveCalculation) {
-      setSaving(true);
-      try {
-        await saveCalculation(stockInfo.symbol, result);
-        setSaved(true);
-      } catch (err) {
-        console.error('Failed to save calculation:', err);
-      } finally {
-        setSaving(false);
-      }
-    }
+      // 히스토리 저장 기능 비활성화됨
+    // if (user && saveCalculation) {
+    //   setSaving(true);
+    //   try {
+    //     await saveCalculation(stockInfo.symbol, result);
+    //     setSaved(true);
+    //   } catch (err) {
+    //     console.error('Failed to save calculation:', err);
+    //   } finally {
+    //     setSaving(false);
+    //   }
+    // }
   };
 
   return (
@@ -180,6 +180,7 @@ export default function RegretCalculator({
               calculation={calculation}
               currency={stockInfo.meta.currency}
             />
+            {/* 히스토리 저장 표시 비활성화됨
             {user && (
               <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">
                 <div className="flex items-center justify-between">
@@ -194,6 +195,7 @@ export default function RegretCalculator({
                 </div>
               </div>
             )}
+            */}
           </div>
         )}
       </div>

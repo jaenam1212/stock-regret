@@ -12,7 +12,7 @@ import StockChart from '@/components/chart/StockChart';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MarketType, StockInfo } from '@/types/stock';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 
 interface StockContentProps {
   initialStockInfo: StockInfo;
@@ -39,6 +39,50 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
   });
 
   const { user, signOut } = useAuth();
+
+  // 컴포넌트 마운트 시 초기 데이터 가져오기
+  useEffect(() => {
+    const loadInitialData = async () => {
+      // 초기 데이터가 비어있으면 API에서 최신 데이터 가져오기
+      if (initialStockInfo.data.length === 0) {
+        try {
+          const data = await getStockData('NVDA', 'us');
+          setStockInfo(data);
+          setLastValidState({
+            stockInfo: data,
+            symbol: data.symbol,
+            marketType: getMarketType(data.symbol),
+          });
+        } catch (err) {
+          console.error('Failed to load initial data:', err);
+          // 이미 page.tsx에서 기본 데이터를 제공하므로 추가 처리 불필요
+        }
+      } else {
+        // 초기 데이터가 있으면 백그라운드에서 최신 데이터 가져오기 시도 (목 데이터 확인)
+        const isMockData = initialStockInfo.meta.lastUpdated === new Date(0).toISOString();
+        
+        if (isMockData) {
+          try {
+            const data = await getStockData('NVDA', 'us');
+            // 실제 데이터를 받았을 때만 업데이트 (목 데이터가 아닌 경우)
+            if (data.meta.lastUpdated !== new Date(0).toISOString()) {
+              setStockInfo(data);
+              setLastValidState({
+                stockInfo: data,
+                symbol: data.symbol,
+                marketType: getMarketType(data.symbol),
+              });
+            }
+          } catch (err) {
+            console.warn('Failed to update initial data, using static data:', err);
+            // 실패해도 이미 차트 데이터가 있으므로 문제없음
+          }
+        }
+      }
+    };
+
+    loadInitialData();
+  }, [initialStockInfo.data.length]);
 
   const handleSymbolChange = async (
     newSymbol: string,
@@ -113,12 +157,14 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
               아! 살껄 계산기
             </h1>
             <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
-              <a
+              {/* 히스토리 링크 비활성화됨
+              <Link
                 href="/history"
                 className="px-3 sm:px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs sm:text-sm font-medium transition-colors"
               >
                 계산 내역
-              </a>
+              </Link>
+              */}
               {user ? (
                 <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
                   <span className="text-xs sm:text-sm text-gray-400 hidden sm:inline">

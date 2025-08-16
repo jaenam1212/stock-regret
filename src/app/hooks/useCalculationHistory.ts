@@ -1,5 +1,25 @@
 'use client';
 
+// 히스토리 기능 비활성화됨
+export function useCalculationHistory(userId?: string) {
+  // 비활성화된 상태로 더미 데이터 반환
+  return {
+    history: [],
+    loading: false,
+    error: null,
+    saveCalculation: async () => {
+      throw new Error('히스토리 기능이 비활성화되었습니다.');
+    },
+    deleteCalculation: async () => {
+      throw new Error('히스토리 기능이 비활성화되었습니다.');
+    },
+    refetch: async () => {
+      throw new Error('히스토리 기능이 비활성화되었습니다.');
+    },
+  };
+}
+
+/* 비활성화된 코드 - 디버깅 후 복원 필요시 사용
 import { CalculationHistory, supabase } from '@/lib/supabase';
 import { CalculationResult } from '@/types/stock';
 import { useEffect, useState } from 'react';
@@ -111,6 +131,7 @@ export function useCalculationHistory(userId?: string) {
     } else {
       setHistory([]);
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [userId]);
 
   return {
@@ -122,3 +143,4 @@ export function useCalculationHistory(userId?: string) {
     refetch: fetchHistory,
   };
 }
+*/

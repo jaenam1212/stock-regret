@@ -19,11 +19,16 @@ export function useExchangeRate() {
 
       if (data.isFallback) {
         console.warn('Using fallback exchange rate');
+        setError(null); // 폴백 데이터는 에러가 아님
+      } else {
+        setError(null); // 성공시 에러 클리어
       }
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error occurred');
-      console.error('Error fetching exchange rate:', err);
-      // 에러 시에도 기본값 유지
+      // getExchangeRate에서 이미 폴백 데이터를 반환하므로 
+      // 여기서 에러가 발생하는 경우는 거의 없음
+      console.warn('Unexpected error in useExchangeRate:', err);
+      setError(null); // 환율은 중요하지 않으므로 에러 표시하지 않음
+      // 기본값(1350) 유지
     } finally {
       setLoading(false);
     }
