@@ -4,10 +4,10 @@ import axios from 'axios';
 const getBaseURL = () => {
   if (typeof window === 'undefined') {
     // 서버 사이드에서는 환경변수나 기본값 사용
-    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+    return process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
   }
-  // 클라이언트 사이드에서는 현재 도메인 사용
-  return '';
+  // 클라이언트 사이드에서는 환경변수 사용
+  return process.env.NEXT_PUBLIC_API_URL || '';
 };
 
 // 기본 axios 인스턴스 생성
