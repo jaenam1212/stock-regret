@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiRateLimiter, getClientIP, getSecurityHeaders } from '@/lib/security';
 
 // 암호화폐 심볼/이름 매핑 테이블
 const CRYPTO_MAPPING: Record<string, string> = {
@@ -106,6 +107,18 @@ function generateFallbackData(symbol: string) {
 }
 
 export async function GET(request: NextRequest) {
+  // Rate limiting 체크
+  const clientIP = getClientIP(request);
+  if (!apiRateLimiter.isAllowed(clientIP)) {
+    return NextResponse.json(
+      { error: 'Too many requests', message: 'Rate limit exceeded' },
+      { 
+        status: 429,
+        headers: getSecurityHeaders()
+      }
+    );
+  }
+
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol') || 'bitcoin';
 
@@ -253,6 +266,8 @@ export async function GET(request: NextRequest) {
           exchangeName: 'Crypto',
           lastUpdated: new Date(0).toISOString(),
         },
+      }, {
+        headers: getSecurityHeaders()
       });
     } catch (apiError) {
       if (apiError instanceof Error && apiError.name === 'AbortError') {
