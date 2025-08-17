@@ -14,7 +14,7 @@ export const getExchangeRate = async (
   to: string = 'USD'
 ): Promise<ExchangeRateData> => {
   try {
-    const response = await apiClient.get(`/api/exchange-rate`, {
+    const response = await apiClient.get(`/api/stock/exchange-rate`, {
       params: { from, to },
     });
     return response.data;

@@ -126,16 +126,8 @@ export const getStockData = async (
     const { symbol, resolvedMarketType } = resolveSymbol(input, marketType);
     let endpoint: string;
 
-    switch (resolvedMarketType) {
-      case 'kr':
-        endpoint = '/api/kr-stock-data';
-        break;
-      case 'crypto':
-        endpoint = '/api/crypto-data';
-        break;
-      default:
-        endpoint = '/api/stock-data';
-    }
+    // 모든 마켓 타입에 대해 동일한 엔드포인트 사용
+    endpoint = '/api/stock/data';
 
     // SSR에서는 기본 데이터 반환 (빌드 시점 안정성)
     if (typeof window === 'undefined') {
