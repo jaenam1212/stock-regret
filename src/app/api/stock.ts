@@ -154,10 +154,22 @@ export const getStockData = async (
       };
     }
 
-    // 클라이언트에서는 axios 사용
-    const response = await apiClient.get(endpoint, {
-      params: { symbol },
-    });
+    // 클라이언트에서 API 호출
+    let response;
+    if (resolvedMarketType === 'crypto' || resolvedMarketType === 'kr') {
+      // 코인과 한국주식은 Next.js 라우트이므로 fetch 사용 (현재 도메인)
+      const url = `${endpoint}?symbol=${encodeURIComponent(symbol)}`;
+      const fetchResponse = await fetch(url);
+      if (!fetchResponse.ok) {
+        throw new Error(`HTTP error! status: ${fetchResponse.status}`);
+      }
+      response = { data: await fetchResponse.json() };
+    } else {
+      // 미국주식은 백엔드 API 사용
+      response = await apiClient.get(endpoint, {
+        params: { symbol },
+      });
+    }
     return response.data;
   } catch (error: any) {
     console.error('Failed to fetch stock data:', error);
