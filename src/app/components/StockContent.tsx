@@ -3,6 +3,7 @@
 import { getMarketType, getStockData } from '@/app/api';
 import UnifiedSearch from '@/app/components/MarketTabs';
 import AuthModal from '@/app/components/auth/AuthModal';
+import TabNavigation from '@/app/components/TabNavigation';
 import ChatSidebar from '@/app/components/chat/ChatSidebar';
 import { useAuth } from '@/app/hooks/useAuth';
 import StockHeader from '@/components/StockHeader';
@@ -13,13 +14,73 @@ import StockSimulation from '@/components/simulation/StockSimulation';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MarketType, StockInfo } from '@/types/stock';
+import Image from 'next/image';
+import Link from 'next/link';
 import { useEffect, useState } from 'react';
 
 interface StockContentProps {
-  initialStockInfo: StockInfo;
+  initialStockInfo?: StockInfo;
 }
 
-export default function StockContent({ initialStockInfo }: StockContentProps) {
+// 기본 주식 정보
+const defaultStockInfo: StockInfo = {
+  symbol: 'NVDA',
+  currentPrice: 150.0,
+  change: 2.5,
+  changePercent: 1.67,
+  data: [
+    {
+      time: String(Math.floor(Date.now() / 1000) - 86400 * 4),
+      open: 147.5,
+      high: 149.0,
+      low: 147.0,
+      close: 148.0,
+      volume: 1000000,
+    },
+    {
+      time: String(Math.floor(Date.now() / 1000) - 86400 * 3),
+      open: 148.0,
+      high: 150.0,
+      low: 147.5,
+      close: 149.5,
+      volume: 1200000,
+    },
+    {
+      time: String(Math.floor(Date.now() / 1000) - 86400 * 2),
+      open: 149.5,
+      high: 151.0,
+      low: 149.0,
+      close: 150.0,
+      volume: 1100000,
+    },
+    {
+      time: String(Math.floor(Date.now() / 1000) - 86400),
+      open: 150.0,
+      high: 152.0,
+      low: 149.5,
+      close: 151.5,
+      volume: 1300000,
+    },
+    {
+      time: String(Math.floor(Date.now() / 1000)),
+      open: 151.5,
+      high: 153.0,
+      low: 150.5,
+      close: 152.0,
+      volume: 1400000,
+    },
+  ],
+  meta: {
+    companyName: 'NVIDIA Corporation',
+    currency: 'USD',
+    exchangeName: 'NASDAQ',
+    lastUpdated: new Date(0).toISOString(),
+  },
+};
+
+export default function StockContent({
+  initialStockInfo = defaultStockInfo,
+}: StockContentProps) {
   const [stockInfo, setStockInfo] = useState<StockInfo>(initialStockInfo);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -30,9 +91,6 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<
-    'single' | 'compare' | 'simulation'
-  >('single');
 
   // 이전 상태 저장 (에러 발생 전의 마지막 성공 상태)
   const [lastValidState, setLastValidState] = useState({
@@ -89,7 +147,7 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
     };
 
     loadInitialData();
-  }, [initialStockInfo.data.length]);
+  }, [initialStockInfo.data.length, initialStockInfo.meta.lastUpdated]);
 
   const handleSymbolChange = async (
     newSymbol: string,
@@ -161,10 +219,12 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
         <div className="container mx-auto px-3 py-2 border-b border-gray-800">
           <div className="flex items-center justify-center">
             <div className="flex items-center gap-2">
-              <img
+              <Image
                 src="/logo.png"
                 alt="아! 살껄 계산기 로고"
                 className="w-6 h-6"
+                width={24}
+                height={24}
               />
               <h1 className="text-lg font-bold text-white">아! 살껄 계산기</h1>
             </div>
@@ -199,84 +259,33 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
         {/* 메인 영역 */}
         <div className="h-full overflow-y-auto p-3 sm:p-4 lg:p-6">
           <div className="max-w-7xl mx-auto">
-            {/* 탭 메뉴 */}
+            <TabNavigation />
             <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800 overflow-hidden mb-3 sm:mb-4 lg:mb-6">
-              <div className="flex border-b border-gray-800">
-                <button
-                  onClick={() => setActiveTab('single')}
-                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
-                    activeTab === 'single'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  단일 차트
-                </button>
-                <button
-                  onClick={() => setActiveTab('compare')}
-                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
-                    activeTab === 'compare'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  듀얼 차트
-                </button>
-                <button
-                  onClick={() => setActiveTab('simulation')}
-                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
-                    activeTab === 'simulation'
-                      ? 'bg-blue-600 text-white'
-                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
-                  }`}
-                >
-                  시뮬레이션
-                </button>
-              </div>
-
-              {activeTab === 'single' && (
-                <>
-                  <StockHeader
-                    stockInfo={stockInfo}
-                    symbol={symbol}
-                    marketType={marketType}
-                    onSymbolChange={handleSymbolChange}
+              <StockHeader
+                stockInfo={stockInfo}
+                symbol={symbol}
+                marketType={marketType}
+                onSymbolChange={handleSymbolChange}
+              />
+              <div className="p-3 sm:p-4 lg:p-6">
+                <div className="h-64 sm:h-80 lg:h-96">
+                  <StockChart
+                    data={stockInfo.data}
+                    onDateSelect={handleDateSelect}
+                    selectedDate={selectedDate}
                   />
-                  <div className="p-3 sm:p-4 lg:p-6">
-                    <div className="h-64 sm:h-80 lg:h-96">
-                      <StockChart
-                        data={stockInfo.data}
-                        onDateSelect={handleDateSelect}
-                        selectedDate={selectedDate}
-                      />
-                    </div>
-                  </div>
-                </>
-              )}
+                </div>
+              </div>
             </div>
 
             {/* 계산기 영역 */}
             <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-              {activeTab === 'single' && (
-                <RegretCalculator
-                  stockInfo={stockInfo}
-                  selectedDate={selectedDate}
-                  selectedPrice={selectedPrice}
-                  className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800"
-                />
-              )}
-
-              {activeTab === 'compare' && (
-                <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800 p-3 sm:p-4 lg:p-6">
-                  <DualChartComparison />
-                </div>
-              )}
-
-              {activeTab === 'simulation' && (
-                <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800">
-                  <StockSimulation stockInfo={stockInfo} />
-                </div>
-              )}
+              <RegretCalculator
+                stockInfo={stockInfo}
+                selectedDate={selectedDate}
+                selectedPrice={selectedPrice}
+                className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800"
+              />
             </div>
           </div>
         </div>
