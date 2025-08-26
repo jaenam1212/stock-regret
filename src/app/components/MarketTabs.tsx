@@ -1,8 +1,8 @@
 'use client';
 
 import SearchAutocomplete from '@/app/components/SearchAutocomplete';
-import { MarketType } from '@/types/stock';
 import { searchItems } from '@/app/data/stockSearchData';
+import { MarketType } from '@/types/stock';
 import { useState } from 'react';
 
 interface UnifiedSearchProps {
@@ -44,12 +44,17 @@ export default function UnifiedSearch({
   };
 
   return (
-    <div className={`bg-black/50 backdrop-blur-sm border-b border-gray-800 ${className}`}>
+    <div
+      className={`bg-black/50 backdrop-blur-sm border-b border-gray-800 ${className}`}
+    >
       <div className="container mx-auto px-4 py-3">
         {/* 통합 검색 */}
         <div className="flex flex-col gap-3">
           {/* 검색 폼 */}
-          <form onSubmit={handleSearch} className="flex gap-2 w-full max-w-2xl mx-auto">
+          <form
+            onSubmit={handleSearch}
+            className="flex gap-2 w-full max-w-2xl mx-auto"
+          >
             <SearchAutocomplete
               value={searchValue}
               onChange={handleSearchValueChange}
@@ -60,8 +65,8 @@ export default function UnifiedSearch({
             <button
               type="submit"
               className="
-                px-3 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg 
-                font-medium transition-colors focus:outline-none focus:ring-2 
+                px-3 sm:px-6 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg
+                font-medium transition-colors focus:outline-none focus:ring-2
                 focus:ring-blue-500 focus:ring-offset-2 focus:ring-offset-gray-900
                 text-sm sm:text-base flex-shrink-0
               "
@@ -69,11 +74,6 @@ export default function UnifiedSearch({
               검색
             </button>
           </form>
-
-          {/* 통합 검색 설명 */}
-          <div className="text-center text-xs sm:text-sm text-gray-400">
-            미국 주식, 한국 주식, 암호화폐를 한번에 검색하세요 • 예시: 삼성전자, Apple, 비트코인
-          </div>
         </div>
       </div>
     </div>

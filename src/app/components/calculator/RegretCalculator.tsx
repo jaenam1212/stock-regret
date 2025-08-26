@@ -8,6 +8,7 @@ import { CalculationResult, StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 import CalculationResults from './CalculationResults';
 import CalculatorInput from './CalculatorInput';
+import ShareCard from './ShareCard';
 
 interface RegretCalculatorProps {
   stockInfo: StockInfo;
@@ -29,6 +30,7 @@ export default function RegretCalculator({
   );
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
+  const [showShareCard, setShowShareCard] = useState(false);
   const { exchangeRate, loading: exchangeRateLoading } = useExchangeRate();
   const { user } = useAuth();
   const { saveCalculation } = useCalculationHistory(user?.id);
@@ -180,6 +182,36 @@ export default function RegretCalculator({
               calculation={calculation}
               currency={stockInfo.meta.currency}
             />
+            
+            {/* 공유 버튼 */}
+            <div className="mt-6 text-center">
+              <button
+                onClick={() => setShowShareCard(!showShareCard)}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
+                           text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 
+                           shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center mx-auto gap-2"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                </svg>
+                {showShareCard ? '공유 카드 숨기기' : '결과 공유하기'}
+              </button>
+            </div>
+
+            {/* 공유 카드 */}
+            {showShareCard && (
+              <div className="mt-6">
+                <ShareCard
+                  calculation={calculation}
+                  currency={stockInfo.meta.currency}
+                  stockSymbol={stockInfo.symbol}
+                  companyName={stockInfo.meta.companyName}
+                  hideShareButton={true}
+                  stockData={stockInfo.data}
+                />
+              </div>
+            )}
+            
             {/* 히스토리 저장 표시 비활성화됨
             {user && (
               <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">

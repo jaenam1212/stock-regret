@@ -149,56 +149,39 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
 
   return (
     <main className="h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex flex-col">
-      {/* 헤더 */}
-      <header className="flex-shrink-0 bg-black/50 backdrop-blur-sm">
-        <div className="container mx-auto px-3 sm:px-4 py-3 border-b border-gray-800">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-0">
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold text-white text-center sm:text-left">
-              아! 살껄 계산기
-            </h1>
-            <div className="flex items-center justify-center sm:justify-end gap-2 flex-wrap">
-              {/* 히스토리 링크 비활성화됨
-              <Link
-                href="/history"
-                className="px-3 sm:px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded text-xs sm:text-sm font-medium transition-colors"
-              >
-                계산 내역
-              </Link>
-              */}
-              {user ? (
-                <div className="flex items-center gap-2 flex-wrap justify-center sm:justify-end">
-                  <span className="text-xs sm:text-sm text-gray-400 hidden sm:inline">
-                    {user.email}
-                  </span>
-                  <button
-                    onClick={() => signOut()}
-                    className="px-3 sm:px-4 py-2 bg-gray-700 hover:bg-gray-600 border border-gray-600 hover:border-gray-500 rounded text-xs sm:text-sm font-medium transition-all duration-200 flex items-center gap-1"
-                  >
-                    <svg
-                      className="w-3 h-3"
-                      fill="none"
-                      stroke="currentColor"
-                      viewBox="0 0 24 24"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        strokeWidth={2}
-                        d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"
-                      />
-                    </svg>
-                    로그아웃
-                  </button>
-                </div>
-              ) : (
-                <button
-                  onClick={() => setShowAuthModal(true)}
-                  className="px-3 sm:px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded text-xs sm:text-sm font-medium transition-colors"
-                >
-                  로그인
-                </button>
-              )}
+      {/* 헤더 - 컴팩트하게 수정 */}
+      <header className="flex-shrink-0 bg-black/50 backdrop-blur-sm relative">
+        <div className="container mx-auto px-3 py-2 border-b border-gray-800">
+          <div className="flex items-center justify-center">
+            <div className="flex items-center gap-2">
+              <img
+                src="/logo.png"
+                alt="아! 살껄 계산기 로고"
+                className="w-6 h-6"
+              />
+              <h1 className="text-lg font-bold text-white">
+                아! 살껄 계산기
+              </h1>
             </div>
+          </div>
+          
+          {/* 로그인 버튼을 우측 상단으로 */}
+          <div className="absolute top-2 right-3 z-10">
+            {user ? (
+              <button
+                onClick={() => signOut()}
+                className="px-2 py-1 bg-gray-700/80 hover:bg-gray-600 rounded text-xs font-medium transition-colors backdrop-blur-sm"
+              >
+                로그아웃
+              </button>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className="px-2 py-1 bg-blue-600/80 hover:bg-blue-700 rounded text-xs font-medium transition-colors backdrop-blur-sm"
+              >
+                로그인
+              </button>
+            )}
           </div>
         </div>
 
