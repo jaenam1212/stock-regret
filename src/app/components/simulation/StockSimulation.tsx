@@ -23,11 +23,16 @@ export default function StockSimulation({ stockInfo }: StockSimulationProps) {
   const speedRef = useRef(speed);
   const [currentIndex, setCurrentIndex] = useState(0);
   const [selectedData, setSelectedData] = useState<typeof stockInfo.data>([]);
+  const selectedDataRef = useRef(selectedData);
 
-  // speedRef를 항상 최신 속도로 업데이트
+  // speedRef와 selectedDataRef를 항상 최신 값으로 업데이트
   useEffect(() => {
     speedRef.current = speed;
   }, [speed]);
+
+  useEffect(() => {
+    selectedDataRef.current = selectedData;
+  }, [selectedData]);
 
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
@@ -214,34 +219,44 @@ export default function StockSimulation({ stockInfo }: StockSimulationProps) {
     }
 
     const animate = () => {
-      setCurrentIndex((prev) => {
-        const nextIndex = prev + 1;
+      setCurrentIndex((prevIndex) => {
+        const nextIndex = prevIndex + 1;
+        const currentData = selectedDataRef.current;
 
-        if (nextIndex >= selectedData.length) {
+        // 종료 조건 확인 - ref로 최신 데이터 참조
+        if (nextIndex >= currentData.length) {
           setIsPlaying(false);
           if (intervalRef.current) {
             clearTimeout(intervalRef.current);
+            intervalRef.current = null;
           }
-          return prev;
+          return prevIndex; // 마지막 인덱스 유지
         }
 
         // 차트에 데이터 점진적 추가
-        if (seriesRef.current) {
-          const dataSlice = selectedData
-            .slice(0, nextIndex + 1)
-            .map((item) => ({
-              time: Number(item.time) as UTCTimestamp,
-              open: Number(item.open),
-              high: Number(item.high),
-              low: Number(item.low),
-              close: Number(item.close),
-            }));
+        if (seriesRef.current && currentData.length > 0) {
+          try {
+            const dataSlice = currentData
+              .slice(0, nextIndex + 1)
+              .map((item) => ({
+                time: Number(item.time) as UTCTimestamp,
+                open: Number(item.open),
+                high: Number(item.high),
+                low: Number(item.low),
+                close: Number(item.close),
+              }))
+              .filter((item) => !isNaN(item.time) && item.time > 0);
 
-          seriesRef.current.setData(dataSlice);
+            if (dataSlice.length > 0) {
+              seriesRef.current.setData(dataSlice);
 
-          // 차트를 최신 데이터로 스크롤
-          if (chartRef.current) {
-            chartRef.current.timeScale().scrollToRealTime();
+              // 차트를 최신 데이터로 스크롤
+              if (chartRef.current) {
+                chartRef.current.timeScale().scrollToRealTime();
+              }
+            }
+          } catch (error) {
+            console.error('Chart update error:', error);
           }
         }
 
@@ -256,13 +271,14 @@ export default function StockSimulation({ stockInfo }: StockSimulationProps) {
     };
 
     // 첫 번째 프레임 시작
-    animate();
+    setTimeout(animate, 100); // 첫 프레임 약간 지연
   }, [selectedData, isPlaying]);
 
   const pauseAnimation = () => {
     setIsPlaying(false);
     if (intervalRef.current) {
       clearTimeout(intervalRef.current);
+      intervalRef.current = null;
     }
   };
 
@@ -271,6 +287,7 @@ export default function StockSimulation({ stockInfo }: StockSimulationProps) {
     setCurrentIndex(0);
     if (intervalRef.current) {
       clearTimeout(intervalRef.current);
+      intervalRef.current = null;
     }
     if (seriesRef.current) {
       seriesRef.current.setData([]);
@@ -309,6 +326,7 @@ export default function StockSimulation({ stockInfo }: StockSimulationProps) {
     return () => {
       if (intervalRef.current) {
         clearTimeout(intervalRef.current);
+        intervalRef.current = null;
       }
     };
   }, []);
