@@ -9,6 +9,7 @@ import StockHeader from '@/components/StockHeader';
 import DualChartComparison from '@/components/calculator/DualChartComparison';
 import RegretCalculator from '@/components/calculator/RegretCalculator';
 import StockChart from '@/components/chart/StockChart';
+import StockSimulation from '@/components/simulation/StockSimulation';
 import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MarketType, StockInfo } from '@/types/stock';
@@ -29,7 +30,9 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
-  const [activeTab, setActiveTab] = useState<'single' | 'compare'>('single');
+  const [activeTab, setActiveTab] = useState<
+    'single' | 'compare' | 'simulation'
+  >('single');
 
   // 이전 상태 저장 (에러 발생 전의 마지막 성공 상태)
   const [lastValidState, setLastValidState] = useState({
@@ -59,8 +62,9 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
         }
       } else {
         // 초기 데이터가 있으면 백그라운드에서 최신 데이터 가져오기 시도 (목 데이터 확인)
-        const isMockData = initialStockInfo.meta.lastUpdated === new Date(0).toISOString();
-        
+        const isMockData =
+          initialStockInfo.meta.lastUpdated === new Date(0).toISOString();
+
         if (isMockData) {
           try {
             const data = await getStockData('NVDA', 'us');
@@ -74,7 +78,10 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
               });
             }
           } catch (err) {
-            console.warn('Failed to update initial data, using static data:', err);
+            console.warn(
+              'Failed to update initial data, using static data:',
+              err
+            );
             // 실패해도 이미 차트 데이터가 있으므로 문제없음
           }
         }
@@ -159,12 +166,10 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
                 alt="아! 살껄 계산기 로고"
                 className="w-6 h-6"
               />
-              <h1 className="text-lg font-bold text-white">
-                아! 살껄 계산기
-              </h1>
+              <h1 className="text-lg font-bold text-white">아! 살껄 계산기</h1>
             </div>
           </div>
-          
+
           {/* 로그인 버튼을 우측 상단으로 */}
           <div className="absolute top-2 right-3 z-10">
             {user ? (
@@ -199,23 +204,33 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
               <div className="flex border-b border-gray-800">
                 <button
                   onClick={() => setActiveTab('single')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
                     activeTab === 'single'
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  단일 종목 분석
+                  단일 차트
                 </button>
                 <button
                   onClick={() => setActiveTab('compare')}
-                  className={`flex-1 px-4 py-3 text-sm font-medium transition-colors ${
+                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
                     activeTab === 'compare'
                       ? 'bg-blue-600 text-white'
                       : 'text-gray-400 hover:text-white hover:bg-gray-800'
                   }`}
                 >
-                  듀얼 차트 비교
+                  듀얼 차트
+                </button>
+                <button
+                  onClick={() => setActiveTab('simulation')}
+                  className={`flex-1 px-3 py-3 text-sm font-medium transition-colors ${
+                    activeTab === 'simulation'
+                      ? 'bg-blue-600 text-white'
+                      : 'text-gray-400 hover:text-white hover:bg-gray-800'
+                  }`}
+                >
+                  시뮬레이션
                 </button>
               </div>
 
@@ -242,16 +257,24 @@ export default function StockContent({ initialStockInfo }: StockContentProps) {
 
             {/* 계산기 영역 */}
             <div className="space-y-3 sm:space-y-4 lg:space-y-6">
-              {activeTab === 'single' ? (
+              {activeTab === 'single' && (
                 <RegretCalculator
                   stockInfo={stockInfo}
                   selectedDate={selectedDate}
                   selectedPrice={selectedPrice}
                   className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800"
                 />
-              ) : (
+              )}
+
+              {activeTab === 'compare' && (
                 <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800 p-3 sm:p-4 lg:p-6">
                   <DualChartComparison />
+                </div>
+              )}
+
+              {activeTab === 'simulation' && (
+                <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800">
+                  <StockSimulation stockInfo={stockInfo} />
                 </div>
               )}
             </div>
