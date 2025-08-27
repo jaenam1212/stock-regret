@@ -9,7 +9,7 @@ import ErrorDisplay from '@/components/ui/ErrorDisplay';
 import LoadingSpinner from '@/components/ui/LoadingSpinner';
 import { MarketType, StockInfo } from '@/types/stock';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useEffect, useState } from 'react';
+import { Suspense, useEffect, useState } from 'react';
 
 // 기본 주식 정보
 const defaultStockInfo: StockInfo = {
@@ -26,7 +26,7 @@ const defaultStockInfo: StockInfo = {
   },
 };
 
-export default function DoubleChartPage() {
+function DoubleChartContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -127,5 +127,19 @@ export default function DoubleChartPage() {
         <ChatSidebar symbol={`${stockInfo1.symbol}-${stockInfo2.symbol}`} />
       </div>
     </main>
+  );
+}
+
+export default function DoubleChartPage() {
+  return (
+    <Suspense fallback={
+      <main className="h-screen bg-gradient-to-br from-gray-950 via-gray-900 to-black text-white flex flex-col">
+        <div className="flex-1 flex items-center justify-center">
+          <LoadingSpinner />
+        </div>
+      </main>
+    }>
+      <DoubleChartContent />
+    </Suspense>
   );
 }
