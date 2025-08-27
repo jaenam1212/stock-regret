@@ -49,15 +49,23 @@ export default function CalculationResults({
       {/* 결과 카드들 */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
         <ResultCard
-          label="투자 금액"
+          label={calculation.isMonthly ? "총 투자 금액" : "투자 금액"}
           value={formatCurrency(calculation.investAmount)}
-          subtext={`${calculation.investDate}`}
+          subtext={
+            calculation.isMonthly
+              ? `${calculation.totalMonths}개월 × ${formatCurrency(calculation.monthlyAmount || 0)}`
+              : calculation.investDate
+          }
         />
 
         <ResultCard
-          label="구매 가능했던 주식"
+          label="보유 주식"
           value={`${calculation.shares.toFixed(2)}주`}
-          subtext={`@${formatPrice(calculation.pastPrice, currency)}`}
+          subtext={
+            calculation.isMonthly
+              ? `평균 매입가 ${formatPrice(calculation.pastPrice, currency)}`
+              : `@${formatPrice(calculation.pastPrice, currency)}`
+          }
         />
 
         <ResultCard
@@ -78,7 +86,7 @@ export default function CalculationResults({
       </div>
 
       {/* 추가 통계 */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div className={`grid grid-cols-1 ${calculation.isMonthly ? 'md:grid-cols-4' : 'md:grid-cols-3'} gap-4`}>
         <div className="bg-gray-800/30 rounded-lg p-4">
           <div className="flex items-center justify-between">
             <span className="text-gray-400">투자 배수</span>
@@ -101,6 +109,17 @@ export default function CalculationResults({
             </span>
           </div>
         </div>
+
+        {calculation.isMonthly && (
+          <div className="bg-gray-800/30 rounded-lg p-4">
+            <div className="flex items-center justify-between">
+              <span className="text-gray-400">투자 기간</span>
+              <span className="text-xl font-bold text-blue-400">
+                {calculation.totalMonths}개월
+              </span>
+            </div>
+          </div>
+        )}
 
         <div className="bg-gray-800/30 rounded-lg p-4">
           <div className="flex items-center justify-between">

@@ -7,7 +7,7 @@ import { formatPrice } from '@/app/lib/utils';
 import { CalculationResult, StockInfo } from '@/types/stock';
 import { useEffect, useState } from 'react';
 import CalculationResults from './CalculationResults';
-import CalculatorInput from './CalculatorInput';
+import CalculatorInput, { InvestmentType } from './CalculatorInput';
 import ShareCard from './ShareCard';
 
 interface RegretCalculatorProps {
@@ -25,6 +25,8 @@ export default function RegretCalculator({
 }: RegretCalculatorProps) {
   const [investDate, setInvestDate] = useState<string>(selectedDate || '');
   const [investAmount, setInvestAmount] = useState<number>(1000000);
+  const [investmentType, setInvestmentType] = useState<InvestmentType>('lump-sum');
+  const [monthlyAmount, setMonthlyAmount] = useState<number>(100000);
   const [calculation, setCalculation] = useState<CalculationResult | null>(
     null
   );
@@ -50,8 +52,13 @@ export default function RegretCalculator({
   const maxDate = new Date().toISOString().split('T')[0];
 
   const calculateRegret = async () => {
-    if (!investDate || !investAmount) {
+    if (!investDate || (investmentType === 'lump-sum' ? !investAmount : !monthlyAmount)) {
       alert('모든 항목을 입력해주세요');
+      return;
+    }
+
+    if (investmentType === 'monthly') {
+      calculateMonthlyInvestment();
       return;
     }
 
@@ -144,6 +151,80 @@ export default function RegretCalculator({
     // }
   };
 
+  const calculateMonthlyInvestment = () => {
+    const startDate = new Date(investDate);
+    const currentDate = new Date();
+    const isUSD = stockInfo.meta.currency === 'USD';
+    const rate = isUSD ? exchangeRate : 1;
+
+    let totalInvested = 0;
+    let totalShares = 0;
+    let investmentDate = new Date(startDate);
+
+    // 매월 투자 시뮬레이션
+    while (investmentDate <= currentDate) {
+      const monthTimestamp = investmentDate.getTime() / 1000;
+      
+      // 해당 월에 가장 가까운 주식 데이터 찾기
+      const monthData = stockInfo.data.find(item => {
+        const itemDate = new Date(Number(item.time) * 1000);
+        return Math.abs(itemDate.getTime() - investmentDate.getTime()) <= 15 * 24 * 60 * 60 * 1000; // 15일 이내
+      });
+
+      if (monthData) {
+        const monthPrice = monthData.close;
+        const investBase = isUSD ? monthlyAmount / rate : monthlyAmount;
+        const sharesThisMonth = investBase / monthPrice;
+        
+        totalInvested += monthlyAmount;
+        totalShares += sharesThisMonth;
+      }
+
+      // 다음 달로 이동
+      investmentDate.setMonth(investmentDate.getMonth() + 1);
+    }
+
+    if (totalShares === 0) {
+      alert('선택한 기간에 유효한 거래 데이터가 없습니다.');
+      return;
+    }
+
+    const currentPrice = stockInfo.currentPrice;
+    const currentValueBase = totalShares * currentPrice;
+    const currentValue = isUSD ? currentValueBase * rate : currentValueBase;
+
+    // 손익 계산
+    const profit = currentValue - totalInvested;
+    const profitPercent = (profit / totalInvested) * 100;
+
+    // 연환산 수익률 계산
+    const daysDiff = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    const yearsDiff = daysDiff / 365;
+
+    let yearlyReturn = 0;
+    if (yearsDiff > 0) {
+      yearlyReturn = (Math.pow(currentValue / totalInvested, 1 / yearsDiff) - 1) * 100;
+    }
+
+    const result = {
+      investAmount: totalInvested,
+      investDate: startDate.toLocaleDateString('ko-KR'),
+      pastPrice: totalInvested / totalShares, // 평균 매입가
+      currentPrice,
+      shares: totalShares,
+      currentValue,
+      profit,
+      profitPercent,
+      yearlyReturn,
+      isMonthly: true,
+      monthlyAmount,
+      totalMonths: Math.floor(yearsDiff * 12),
+    };
+
+    setCalculation(result);
+    setSaved(false);
+  };
+
   return (
     <div className={className}>
       <div className="p-4 lg:p-6">
@@ -174,6 +255,8 @@ export default function RegretCalculator({
           onDateChange={setInvestDate}
           onAmountChange={setInvestAmount}
           onCalculate={calculateRegret}
+          onInvestmentTypeChange={setInvestmentType}
+          onMonthlyAmountChange={setMonthlyAmount}
         />
 
         {calculation && (

@@ -32,6 +32,10 @@ export interface CalculationResult {
   profit: number;
   profitPercent: number;
   yearlyReturn: number;
+  // 적립식 투자 관련 정보 (옵셔널)
+  isMonthly?: boolean;
+  monthlyAmount?: number;
+  totalMonths?: number;
 }
 
 export interface CandlestickData {
