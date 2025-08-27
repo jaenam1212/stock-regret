@@ -1,3 +1,4 @@
+import { SpeedInsights } from '@vercel/speed-insights/next';
 import type { Metadata } from 'next';
 import { Geist, Geist_Mono } from 'next/font/google';
 import './globals.css';
@@ -30,7 +31,8 @@ export const metadata: Metadata = {
     '주식계산기',
     '투자후회',
     '수익률시뮬레이션',
-    '최신주가',
+    '껄',
+    '껄무새',
   ],
   authors: [{ name: 'Stock Regret Calculator' }],
   openGraph: {
@@ -80,6 +82,7 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         {children}
+        <SpeedInsights />
       </body>
     </html>
   );

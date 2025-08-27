@@ -93,7 +93,8 @@ export default function SimulationPage() {
 
   // 초기 로딩
   useEffect(() => {
-    if (symbol !== stockInfo.symbol) {
+    // 기본 임시 데이터일 때 또는 심볼이 다를 때 로딩
+    if (symbol !== stockInfo.symbol || stockInfo.meta.lastUpdated === new Date(0).toISOString()) {
       loadStockData(symbol);
     }
   }, [symbol]);
