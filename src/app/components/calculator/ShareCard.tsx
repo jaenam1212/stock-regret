@@ -40,7 +40,6 @@ export default function ShareCard({
 
     try {
       // html2canvas 동적 import
-      // @ts-expect-error - html2canvas 모듈 타입 문제
       const { default: html2canvas } = await import('html2canvas');
 
       const canvas = await html2canvas(cardRef.current, {
@@ -150,7 +149,7 @@ export default function ShareCard({
 
         {/* 투자 정보 */}
         <div className="space-y-4 mb-6">
-          <div className="flex justify-between items-center bg-gray-700/50 rounded-lg p-3">
+          <div className="flex justify-between items-center bg-gray-700/50 rounded-lg p-3 min-h-[4rem]">
             <div>
               <div className="text-xs text-gray-400">투자 날짜</div>
               <div className="text-sm font-medium text-white">
@@ -165,7 +164,7 @@ export default function ShareCard({
             </div>
           </div>
 
-          <div className="flex justify-between items-center bg-gray-700/50 rounded-lg p-3">
+          <div className="flex justify-between items-center bg-gray-700/50 rounded-lg p-3 min-h-[4rem]">
             <div>
               <div className="text-xs text-gray-400">오늘 날짜</div>
               <div className="text-sm font-medium text-white">{today}</div>
@@ -221,7 +220,7 @@ export default function ShareCard({
 
       {/* 공유 버튼 */}
       {!hideShareButton && (
-        <div className="text-center">
+        <div className="text-center mb-8 pb-4">
           <button
             onClick={handleShare}
             className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700
