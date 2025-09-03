@@ -90,7 +90,8 @@ export default function CalculatorInput({
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg
                        text-white focus:border-blue-500 focus:outline-none transition-colors
                        date:text-gray-300 [&::-webkit-calendar-picker-indicator]:brightness-200
-                       [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:scale-125"
+                       [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:scale-125
+                       box-border max-w-full"
           />
         </div>
 
