@@ -36,7 +36,8 @@ export default function CalculatorInput({
   onInvestmentTypeChange,
   onMonthlyAmountChange,
 }: CalculatorInputProps) {
-  const [investmentType, setInvestmentType] = useState<InvestmentType>('lump-sum');
+  const [investmentType, setInvestmentType] =
+    useState<InvestmentType>('lump-sum');
   const [monthlyAmount, setMonthlyAmount] = useState<number>(100000);
 
   const handleInvestmentTypeChange = (type: InvestmentType) => {
@@ -48,7 +49,7 @@ export default function CalculatorInput({
     setMonthlyAmount(amount);
     onMonthlyAmountChange?.(amount);
   };
-  
+
   return (
     <div className="space-y-6">
       {/* 투자 방식 선택 */}
@@ -87,19 +88,23 @@ export default function CalculatorInput({
             min={minDate}
             max={maxDate}
             className="w-full px-3 py-2 bg-gray-800 border border-gray-700 rounded-lg
-                       text-white focus:border-blue-500 focus:outline-none transition-colors"
+                       text-white focus:border-blue-500 focus:outline-none transition-colors
+                       date:text-gray-300 [&::-webkit-calendar-picker-indicator]:brightness-200
+                       [&::-webkit-calendar-picker-indicator]:opacity-100 [&::-webkit-calendar-picker-indicator]:scale-125"
           />
         </div>
 
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-2">
-            {investmentType === 'monthly' ? '월 투자 금액 (원)' : '투자 금액 (원)'}
+            {investmentType === 'monthly'
+              ? '월 투자 금액 (원)'
+              : '투자 금액 (원)'}
           </label>
           <input
             type="number"
             value={investmentType === 'monthly' ? monthlyAmount : investAmount}
-            onChange={(e) => 
-              investmentType === 'monthly' 
+            onChange={(e) =>
+              investmentType === 'monthly'
                 ? handleMonthlyAmountChange(Number(e.target.value))
                 : onAmountChange(Number(e.target.value))
             }
@@ -109,44 +114,44 @@ export default function CalculatorInput({
           />
         </div>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-400 mb-2">
-          현재 주가
-        </label>
-        <input
-          type="text"
-          value={formatPrice(currentPrice, currency)}
-          readOnly
-          className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
-                     text-gray-400 cursor-not-allowed"
-        />
-      </div>
-
-      {currency === 'USD' && (
         <div>
           <label className="block text-sm font-medium text-gray-400 mb-2">
-            환율 (KRW/USD)
+            현재 주가
           </label>
-          <div className="relative">
-            <input
-              type="text"
-              value={
-                exchangeRateLoading
-                  ? '로딩 중...'
-                  : `₩${exchangeRate?.toLocaleString() || '1,350'}`
-              }
-              readOnly
-              className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
-                         text-gray-400 cursor-not-allowed"
-            />
-            {exchangeRateLoading && (
-              <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
-                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
-              </div>
-            )}
-          </div>
+          <input
+            type="text"
+            value={formatPrice(currentPrice, currency)}
+            readOnly
+            className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
+                     text-gray-400 cursor-not-allowed"
+          />
         </div>
-      )}
+
+        {currency === 'USD' && (
+          <div>
+            <label className="block text-sm font-medium text-gray-400 mb-2">
+              환율 (KRW/USD)
+            </label>
+            <div className="relative">
+              <input
+                type="text"
+                value={
+                  exchangeRateLoading
+                    ? '로딩 중...'
+                    : `₩${exchangeRate?.toLocaleString() || '1,350'}`
+                }
+                readOnly
+                className="w-full px-3 py-2 bg-gray-800/50 border border-gray-700 rounded-lg
+                         text-gray-400 cursor-not-allowed"
+              />
+              {exchangeRateLoading && (
+                <div className="absolute right-3 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-500"></div>
+                </div>
+              )}
+            </div>
+          </div>
+        )}
 
         <div className="flex items-end">
           <button

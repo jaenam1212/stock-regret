@@ -25,7 +25,8 @@ export default function RegretCalculator({
 }: RegretCalculatorProps) {
   const [investDate, setInvestDate] = useState<string>(selectedDate || '');
   const [investAmount, setInvestAmount] = useState<number>(1000000);
-  const [investmentType, setInvestmentType] = useState<InvestmentType>('lump-sum');
+  const [investmentType, setInvestmentType] =
+    useState<InvestmentType>('lump-sum');
   const [monthlyAmount, setMonthlyAmount] = useState<number>(100000);
   const [calculation, setCalculation] = useState<CalculationResult | null>(
     null
@@ -52,7 +53,10 @@ export default function RegretCalculator({
   const maxDate = new Date().toISOString().split('T')[0];
 
   const calculateRegret = async () => {
-    if (!investDate || (investmentType === 'lump-sum' ? !investAmount : !monthlyAmount)) {
+    if (
+      !investDate ||
+      (investmentType === 'lump-sum' ? !investAmount : !monthlyAmount)
+    ) {
       alert('모든 항목을 입력해주세요');
       return;
     }
@@ -137,7 +141,7 @@ export default function RegretCalculator({
     setCalculation(result);
     setSaved(false);
 
-      // 히스토리 저장 기능 비활성화됨
+    // 히스토리 저장 기능 비활성화됨
     // if (user && saveCalculation) {
     //   setSaving(true);
     //   try {
@@ -164,18 +168,21 @@ export default function RegretCalculator({
     // 매월 투자 시뮬레이션
     while (investmentDate <= currentDate) {
       const monthTimestamp = investmentDate.getTime() / 1000;
-      
+
       // 해당 월에 가장 가까운 주식 데이터 찾기
-      const monthData = stockInfo.data.find(item => {
+      const monthData = stockInfo.data.find((item) => {
         const itemDate = new Date(Number(item.time) * 1000);
-        return Math.abs(itemDate.getTime() - investmentDate.getTime()) <= 15 * 24 * 60 * 60 * 1000; // 15일 이내
+        return (
+          Math.abs(itemDate.getTime() - investmentDate.getTime()) <=
+          15 * 24 * 60 * 60 * 1000
+        ); // 15일 이내
       });
 
       if (monthData) {
         const monthPrice = monthData.close;
         const investBase = isUSD ? monthlyAmount / rate : monthlyAmount;
         const sharesThisMonth = investBase / monthPrice;
-        
+
         totalInvested += monthlyAmount;
         totalShares += sharesThisMonth;
       }
@@ -198,12 +205,14 @@ export default function RegretCalculator({
     const profitPercent = (profit / totalInvested) * 100;
 
     // 연환산 수익률 계산
-    const daysDiff = (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
+    const daysDiff =
+      (currentDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24);
     const yearsDiff = daysDiff / 365;
 
     let yearlyReturn = 0;
     if (yearsDiff > 0) {
-      yearlyReturn = (Math.pow(currentValue / totalInvested, 1 / yearsDiff) - 1) * 100;
+      yearlyReturn =
+        (Math.pow(currentValue / totalInvested, 1 / yearsDiff) - 1) * 100;
     }
 
     const result = {
@@ -265,17 +274,27 @@ export default function RegretCalculator({
               calculation={calculation}
               currency={stockInfo.meta.currency}
             />
-            
+
             {/* 공유 버튼 */}
             <div className="mt-6 text-center">
               <button
                 onClick={() => setShowShareCard(!showShareCard)}
-                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 
-                           text-white px-6 py-3 rounded-lg font-medium transition-all duration-200 
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700
+                           text-white px-6 py-3 rounded-lg font-medium transition-all duration-200
                            shadow-lg hover:shadow-xl transform hover:scale-105 flex items-center mx-auto gap-2"
               >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z" />
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.367 2.684 3 3 0 00-5.367-2.684z"
+                  />
                 </svg>
                 {showShareCard ? '공유 카드 숨기기' : '결과 공유하기'}
               </button>
@@ -294,7 +313,7 @@ export default function RegretCalculator({
                 />
               </div>
             )}
-            
+
             {/* 히스토리 저장 표시 비활성화됨
             {user && (
               <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">
