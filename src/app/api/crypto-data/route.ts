@@ -172,13 +172,15 @@ export async function GET(request: NextRequest) {
 
   const { searchParams } = new URL(request.url);
   const symbol = searchParams.get('symbol') || 'bitcoin';
+  const days = searchParams.get('days') ? parseInt(searchParams.get('days')!, 10) : 365;
 
   try {
     const coinId = getCoinId(symbol);
 
     try {
-      // OHLC 데이터 가져오기 (365일 - CoinGecko 무료 플랜 제한)
-      const ohlcUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/ohlc?vs_currency=usd&days=365`;
+      // OHLC 데이터 가져오기 (days 파라미터 사용, 기본 365일)
+      const ohlcDays = Math.min(days, 365); // CoinGecko 무료 플랜 제한
+      const ohlcUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/ohlc?vs_currency=usd&days=${ohlcDays}`;
       const ohlcResponse = await fetchWithTimeout(ohlcUrl, FETCH_TIMEOUTS.chart);
 
       if (!ohlcResponse.ok) {
@@ -187,8 +189,8 @@ export async function GET(request: NextRequest) {
 
       const ohlcData = await ohlcResponse.json() as [number, number, number, number, number][];
 
-      // 볼륨 데이터 가져오기 (365일 - OHLC와 동일한 기간으로 맞춤)
-      const volumeUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/market_chart?vs_currency=usd&days=365&interval=daily`;
+      // 볼륨 데이터 가져오기 (OHLC와 동일한 기간으로 맞춤)
+      const volumeUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/market_chart?vs_currency=usd&days=${ohlcDays}&interval=daily`;
       const volumeResponse = await fetchWithTimeout(volumeUrl, FETCH_TIMEOUTS.chart);
       
       let volumeData: [number, number][] = [];

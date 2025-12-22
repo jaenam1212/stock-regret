@@ -20,16 +20,22 @@ interface StockChartProps {
   }>;
   onDateSelect?: (date: string, price: number) => void;
   selectedDate?: string;
+  onLoadMoreHistory?: (oldestDate: number) => void;
 }
 
 export default function StockChart({
   data,
   onDateSelect,
   selectedDate,
+  onLoadMoreHistory,
 }: StockChartProps) {
   const chartContainerRef = useRef<HTMLDivElement>(null);
   const chartRef = useRef<IChartApi | null>(null);
   const seriesRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const loadingMoreRef = useRef(false);
+  const oldestDataTimeRef = useRef<number | null>(null);
+  const isFirstLoadRef = useRef(true);
+  const previousDataLengthRef = useRef(0); // 이전 데이터 길이 추적 (SSR 임시 데이터 -> 실제 데이터 감지용)
 
   // 차트 클릭 핸들러를 안정화
   const handleChartClick = useCallback((param: any) => {
@@ -107,6 +113,32 @@ export default function StockChart({
     chartRef.current = chart;
     seriesRef.current = candlestickSeries;
 
+    // 스크롤 이벤트 감지하여 과거 데이터 로드
+    if (onLoadMoreHistory) {
+      const checkLoadMore = () => {
+        if (loadingMoreRef.current) return;
+        
+        const visibleRange = chart.timeScale().getVisibleRange();
+        if (!visibleRange || !oldestDataTimeRef.current) return;
+
+        // 현재 표시된 가장 오래된 시간이 데이터의 가장 오래된 시간보다 30일 이내면 추가 로드
+        const fromTime = typeof visibleRange.from === 'number' ? visibleRange.from : Number(visibleRange.from);
+        const daysDiff = (oldestDataTimeRef.current - fromTime) / (24 * 60 * 60);
+        
+        if (daysDiff < 30 && daysDiff > 0) {
+          loadingMoreRef.current = true;
+          onLoadMoreHistory(oldestDataTimeRef.current);
+          
+          // 로딩이 완료되면 다시 체크 가능하도록
+          setTimeout(() => {
+            loadingMoreRef.current = false;
+          }, 2000);
+        }
+      };
+
+      chart.timeScale().subscribeVisibleTimeRangeChange(checkLoadMore);
+    }
+
     // 반응형 처리
     window.addEventListener('resize', handleResize);
 
@@ -153,14 +185,34 @@ export default function StockChart({
         close: item.close,
       }));
 
+      // 가장 오래된 데이터 시간 저장 (점진적 로딩용)
+      if (formattedData.length > 0 && onLoadMoreHistory) {
+        const sortedData = [...formattedData].sort((a, b) => {
+          const timeA = typeof a.time === 'number' ? a.time : Number(a.time);
+          const timeB = typeof b.time === 'number' ? b.time : Number(b.time);
+          return timeA - timeB;
+        });
+        const oldestTime = sortedData[0].time;
+        oldestDataTimeRef.current = typeof oldestTime === 'number' ? oldestTime : Number(oldestTime);
+      }
+
+      // 데이터가 확장되었는지 확인 (SSR 임시 데이터 -> 실제 데이터)
+      const isDataExpanded = data.length > previousDataLengthRef.current && previousDataLengthRef.current > 0 && previousDataLengthRef.current < 10;
+
       seriesRef.current.setData(formattedData);
 
       // 차트 자동 스케일 조정
       if (chartRef.current) {
-        chartRef.current.timeScale().fitContent();
+        // 첫 로드이거나 SSR 임시 데이터에서 실제 데이터로 확장된 경우
+        if (isFirstLoadRef.current || isDataExpanded) {
+          chartRef.current.timeScale().fitContent();
+          isFirstLoadRef.current = false;
+        }
       }
+
+      previousDataLengthRef.current = data.length;
     }
-  }, [data]);
+  }, [data, onLoadMoreHistory]);
 
   // 데이터가 없을 때 로딩 상태 표시
   if (!data || data.length === 0) {

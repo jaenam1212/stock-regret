@@ -91,6 +91,8 @@ export default function StockContent({
   const [selectedDate, setSelectedDate] = useState<string>('');
   const [selectedPrice, setSelectedPrice] = useState<number>(0);
   const [showAuthModal, setShowAuthModal] = useState(false);
+  const [loadedDays, setLoadedDays] = useState(365); // 현재 로드된 일수
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
 
   // 이전 상태 저장 (에러 발생 전의 마지막 성공 상태)
   const [lastValidState, setLastValidState] = useState({
@@ -160,6 +162,11 @@ export default function StockContent({
     const market = newMarketType || getMarketType(newSymbol);
     setMarketType(market);
 
+    // crypto인 경우 loadedDays 초기화
+    if (market === 'crypto') {
+      setLoadedDays(365);
+    }
+
     try {
       const data = await getStockData(newSymbol, market);
       setStockInfo(data);
@@ -198,6 +205,43 @@ export default function StockContent({
     // 개발 환경에서만 로깅
     if (process.env.NODE_ENV === 'development') {
       console.log(`선택된 날짜: ${date}, 가격: ${price}`);
+    }
+  };
+
+  // 과거 데이터 추가 로드 (crypto만)
+  const handleLoadMoreHistory = async (oldestTimestamp: number) => {
+    if (isLoadingMore || marketType !== 'crypto' || loadedDays >= 1825) return;
+
+    setIsLoadingMore(true);
+    try {
+      // 1년씩 추가 (최대 5년까지)
+      const newDays = Math.min(loadedDays + 365, 1825);
+      const response = await fetch(
+        `/api/crypto-data?symbol=${encodeURIComponent(symbol)}&days=${newDays}`
+      );
+      
+      if (!response.ok) {
+        throw new Error(`Failed to load more data: ${response.status}`);
+      }
+
+      const newData = await response.json();
+      
+      // 기존 데이터와 병합 (중복 제거, 시간순 정렬)
+      const existingTimes = new Set(stockInfo.data.map((d) => d.time));
+      const mergedData = [
+        ...stockInfo.data,
+        ...newData.data.filter((d: typeof stockInfo.data[0]) => !existingTimes.has(d.time)),
+      ].sort((a, b) => Number(a.time) - Number(b.time));
+
+      setStockInfo({
+        ...newData,
+        data: mergedData,
+      });
+      setLoadedDays(newDays);
+    } catch (err) {
+      console.error('Failed to load more history:', err);
+    } finally {
+      setIsLoadingMore(false);
     }
   };
 
@@ -273,8 +317,16 @@ export default function StockContent({
                     data={stockInfo.data}
                     onDateSelect={handleDateSelect}
                     selectedDate={selectedDate}
+                    onLoadMoreHistory={
+                      marketType === 'crypto' ? handleLoadMoreHistory : undefined
+                    }
                   />
                 </div>
+                {isLoadingMore && (
+                  <div className="px-3 sm:px-4 lg:px-6 py-2 text-center">
+                    <p className="text-xs text-gray-400">과거 데이터 로딩 중...</p>
+                  </div>
+                )}
               </div>
             </div>
 
