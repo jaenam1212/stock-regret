@@ -37,17 +37,15 @@ export async function GET(request: NextRequest) {
     const result = yahooData.chart.result[0];
     const timestamps = result.timestamp || [];
     const quotes = result.indicators?.quote?.[0] || {};
-    const adjclose = result.indicators?.adjclose?.[0]?.adjclose || [];
 
+    // 한국 주식은 조정 종가 대신 일반 종가를 사용 (OHLC 일관성 유지)
     const data = timestamps
       .map((timestamp: number, index: number) => ({
         time: String(timestamp),
         open: Number((quotes.open?.[index] || 0).toFixed(0)),
         high: Number((quotes.high?.[index] || 0).toFixed(0)),
         low: Number((quotes.low?.[index] || 0).toFixed(0)),
-        close: Number(
-          (adjclose[index] || quotes.close?.[index] || 0).toFixed(0)
-        ),
+        close: Number((quotes.close?.[index] || 0).toFixed(0)),
         volume: quotes.volume?.[index] || 0,
       }))
       .filter(

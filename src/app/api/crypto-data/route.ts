@@ -2,129 +2,120 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiRateLimiter, getClientIP, getSecurityHeaders } from '@/lib/security';
 
 // 상수
-const COINGECKO_BASE_URL = 'https://api.coingecko.com/api/v3';
 const DEFAULT_USER_AGENT = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36';
-const FETCH_TIMEOUTS = {
-  price: 5000,
-  chart: 15000,
-  detail: 5000,
-} as const;
-const SECONDS_PER_DAY = 86400;
+const FETCH_TIMEOUT = 8000;
 
-// 타입 정의
-interface DailyOHLC {
-  time: number;
-  open: number;
-  high: number;
-  low: number;
-  close: number;
-  volume: number;
-}
-
-interface CoinGeckoChartData {
-  prices?: [number, number][];
-  total_volumes?: [number, number][];
-}
-
-// fetch 헬퍼 함수 (타임아웃 처리 포함)
-async function fetchWithTimeout(
-  url: string,
-  timeout: number,
-  options: RequestInit = {}
-): Promise<Response> {
-  const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), timeout);
-  
-  try {
-    const response = await fetch(url, {
-      ...options,
-      cache: 'no-store',
-      signal: controller.signal,
-      headers: {
-        'User-Agent': DEFAULT_USER_AGENT,
-        ...options.headers,
-      },
-    });
-    clearTimeout(timeoutId);
-    return response;
-  } catch (error) {
-    clearTimeout(timeoutId);
-    throw error;
-  }
-}
-
-// 암호화폐 심볼/이름 매핑 테이블
-const CRYPTO_MAPPING: Record<string, string> = {
+// 암호화폐 심볼을 Yahoo Finance 형식으로 변환 (COIN-USD)
+const CRYPTO_TO_YAHOO_SYMBOL: Record<string, string> = {
   // 영어 심볼
-  btc: 'bitcoin',
-  eth: 'ethereum',
-  bnb: 'binancecoin',
-  ada: 'cardano',
-  sol: 'solana',
-  dot: 'polkadot',
-  doge: 'dogecoin',
-  avax: 'avalanche-2',
-  matic: 'polygon',
-  link: 'chainlink',
-  atom: 'cosmos',
-  ftm: 'fantom',
-  near: 'near',
-  algo: 'algorand',
-  flow: 'flow',
-  ape: 'apecoin',
-  xtz: 'tezos',
-  egld: 'elrond-erd-2',
-  axs: 'axie-infinity',
-  mana: 'decentraland',
-  sand: 'the-sandbox',
-  enj: 'enjincoin',
-  gala: 'gala',
-  chr: 'chromaway',
-  ltc: 'litecoin',
-  xrp: 'ripple',
-  usdt: 'tether',
-  usdc: 'usd-coin',
-
+  btc: 'BTC-USD',
+  eth: 'ETH-USD',
+  bnb: 'BNB-USD',
+  ada: 'ADA-USD',
+  sol: 'SOL-USD',
+  dot: 'DOT-USD',
+  doge: 'DOGE-USD',
+  avax: 'AVAX-USD',
+  matic: 'MATIC-USD',
+  link: 'LINK-USD',
+  atom: 'ATOM-USD',
+  ftm: 'FTM-USD',
+  near: 'NEAR-USD',
+  algo: 'ALGO-USD',
+  flow: 'FLOW-USD',
+  ape: 'APE-USD',
+  xtz: 'XTZ-USD',
+  egld: 'EGLD-USD',
+  axs: 'AXS-USD',
+  mana: 'MANA-USD',
+  sand: 'SAND-USD',
+  enj: 'ENJ-USD',
+  gala: 'GALA-USD',
+  chr: 'CHR-USD',
+  ltc: 'LTC-USD',
+  xrp: 'XRP-USD',
+  usdt: 'USDT-USD',
+  usdc: 'USDC-USD',
+  
+  // 영어 이름
+  bitcoin: 'BTC-USD',
+  ethereum: 'ETH-USD',
+  binancecoin: 'BNB-USD',
+  cardano: 'ADA-USD',
+  solana: 'SOL-USD',
+  polkadot: 'DOT-USD',
+  dogecoin: 'DOGE-USD',
+  avalanche: 'AVAX-USD',
+  'avalanche-2': 'AVAX-USD',
+  polygon: 'MATIC-USD',
+  chainlink: 'LINK-USD',
+  cosmos: 'ATOM-USD',
+  fantom: 'FTM-USD',
+  algorand: 'ALGO-USD',
+  apecoin: 'APE-USD',
+  tezos: 'XTZ-USD',
+  'elrond-erd-2': 'EGLD-USD',
+  'axie-infinity': 'AXS-USD',
+  decentraland: 'MANA-USD',
+  'the-sandbox': 'SAND-USD',
+  enjincoin: 'ENJ-USD',
+  chromaway: 'CHR-USD',
+  litecoin: 'LTC-USD',
+  ripple: 'XRP-USD',
+  tether: 'USDT-USD',
+  'usd-coin': 'USDC-USD',
+  
   // 한글 이름
-  비트코인: 'bitcoin',
-  이더리움: 'ethereum',
-  바이낸스코인: 'binancecoin',
-  에이다: 'cardano',
-  솔라나: 'solana',
-  폴카닷: 'polkadot',
-  도지코인: 'dogecoin',
-  아발란체: 'avalanche-2',
-  폴리곤: 'polygon',
-  체인링크: 'chainlink',
-  코스모스: 'cosmos',
-  팬텀: 'fantom',
-  니어: 'near',
-  알고랜드: 'algorand',
-  플로우: 'flow',
-  에이프코인: 'apecoin',
-  테조스: 'tezos',
-  디센트럴랜드: 'decentraland',
-  샌드박스: 'the-sandbox',
-  엔진코인: 'enjincoin',
-  갈라: 'gala',
-  라이트코인: 'litecoin',
-  리플: 'ripple',
-  테더: 'tether',
+  비트코인: 'BTC-USD',
+  이더리움: 'ETH-USD',
+  바이낸스코인: 'BNB-USD',
+  에이다: 'ADA-USD',
+  솔라나: 'SOL-USD',
+  폴카닷: 'DOT-USD',
+  도지코인: 'DOGE-USD',
+  아발란체: 'AVAX-USD',
+  폴리곤: 'MATIC-USD',
+  체인링크: 'LINK-USD',
+  코스모스: 'ATOM-USD',
+  팬텀: 'FTM-USD',
+  알고랜드: 'ALGO-USD',
+  플로우: 'FLOW-USD',
+  에이프코인: 'APE-USD',
+  테조스: 'XTZ-USD',
+  디센트럴랜드: 'MANA-USD',
+  샌드박스: 'SAND-USD',
+  엔진코인: 'ENJ-USD',
+  갈라: 'GALA-USD',
+  라이트코인: 'LTC-USD',
+  리플: 'XRP-USD',
+  테더: 'USDT-USD',
 };
 
-// 심볼을 CoinGecko ID로 변환
-function getCoinId(symbol: string): string {
+// 심볼을 Yahoo Finance 형식으로 변환
+function getYahooSymbol(symbol: string): string {
   const normalizedSymbol = symbol.toLowerCase().trim();
-  return CRYPTO_MAPPING[normalizedSymbol] || normalizedSymbol;
+  
+  // 이미 -USD 형식이면 그대로 반환
+  if (normalizedSymbol.includes('-usd')) {
+    return symbol.toUpperCase();
+  }
+  
+  // 매핑 테이블에서 찾기
+  const yahooSymbol = CRYPTO_TO_YAHOO_SYMBOL[normalizedSymbol];
+  if (yahooSymbol) {
+    return yahooSymbol;
+  }
+  
+  // 매핑이 없으면 심볼에 -USD 붙여서 반환
+  return `${symbol.toUpperCase()}-USD`;
 }
-
 
 // 기본 데이터 생성 함수
 function generateFallbackData(symbol: string) {
   const now = Math.floor(Date.now() / 1000);
   const days = 365;
   const data = Array.from({ length: days + 1 }, (_, i) => {
-    const timestamp = now - (days - i) * SECONDS_PER_DAY;
+    const timestamp = now - (days - i) * 86400;
     const basePrice = 50000;
     const randomChange = (Math.random() - 0.5) * 0.1;
     const price = basePrice * (1 + randomChange);
@@ -171,106 +162,100 @@ export async function GET(request: NextRequest) {
   }
 
   const { searchParams } = new URL(request.url);
-  const symbol = searchParams.get('symbol') || 'bitcoin';
-  const days = searchParams.get('days') ? parseInt(searchParams.get('days')!, 10) : 365;
-
+  const symbol = searchParams.get('symbol') || 'BTC';
+  
   try {
-    const coinId = getCoinId(symbol);
-
+    const yahooSymbol = getYahooSymbol(symbol);
+    
+    // Yahoo Finance API 호출
     try {
-      // OHLC 데이터 가져오기 (days 파라미터 사용, 기본 365일)
-      const ohlcDays = Math.min(days, 365); // CoinGecko 무료 플랜 제한
-      const ohlcUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/ohlc?vs_currency=usd&days=${ohlcDays}`;
-      const ohlcResponse = await fetchWithTimeout(ohlcUrl, FETCH_TIMEOUTS.chart);
-
-      if (!ohlcResponse.ok) {
-        throw new Error(`Failed to fetch OHLC data: ${ohlcResponse.status}`);
-      }
-
-      const ohlcData = await ohlcResponse.json() as [number, number, number, number, number][];
-
-      // 볼륨 데이터 가져오기 (OHLC와 동일한 기간으로 맞춤)
-      const volumeUrl = `${COINGECKO_BASE_URL}/coins/${coinId}/market_chart?vs_currency=usd&days=${ohlcDays}&interval=daily`;
-      const volumeResponse = await fetchWithTimeout(volumeUrl, FETCH_TIMEOUTS.chart);
+      const yahooUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${yahooSymbol}?period1=0&period2=9999999999&interval=1d`;
       
-      let volumeData: [number, number][] = [];
-      if (volumeResponse.ok) {
-        const volumeJson = await volumeResponse.json() as CoinGeckoChartData;
-        volumeData = volumeJson.total_volumes || [];
-      }
-
-      // 코인 이름 가져오기 (선택적, 실패해도 계속 진행)
-      let companyName = symbol.toUpperCase();
-      try {
-        const detailUrl = `${COINGECKO_BASE_URL}/coins/${coinId}`;
-        const detailResponse = await fetchWithTimeout(detailUrl, FETCH_TIMEOUTS.detail);
-        if (detailResponse.ok) {
-          const detail = await detailResponse.json();
-          companyName = detail.name || companyName;
-        }
-      } catch {
-        // detail API 실패는 무시 (기본 이름 사용)
-      }
-
-      // OHLC 데이터 포맷팅
-      const data = ohlcData.map((ohlc, index) => {
-        const timestamp = Math.floor(ohlc[0] / 1000);
-        const volume = volumeData[index] ? volumeData[index][1] : 0;
-        
-        return {
-          time: timestamp.toString(),
-          open: Number(ohlc[1].toFixed(2)),
-          high: Number(ohlc[2].toFixed(2)),
-          low: Number(ohlc[3].toFixed(2)),
-          close: Number(ohlc[4].toFixed(2)),
-          volume: Number(volume.toFixed(0)),
-        };
-      });
-
-      // 현재 가격 및 변화율 계산
-      const latest = data[data.length - 1];
-      const previous = data[data.length - 2] || latest;
-      const currentPrice = latest.close;
-      const change = currentPrice - previous.close;
-      const changePercent = previous.close > 0 ? (change / previous.close) * 100 : 0;
-
-      return NextResponse.json(
-        {
-          symbol: symbol.toUpperCase(),
-          currentPrice,
-          change,
-          changePercent,
-          data,
-          meta: {
-            companyName,
-            currency: 'USD',
-            exchangeName: 'Crypto',
-            lastUpdated: new Date().toISOString(),
-          },
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT);
+      
+      const yahooRes = await fetch(yahooUrl, {
+        headers: {
+          'User-Agent': DEFAULT_USER_AGENT,
         },
-        { headers: getSecurityHeaders() }
-      );
-    } catch (apiError) {
-      const isTimeout = apiError instanceof Error && apiError.name === 'AbortError';
+        cache: 'no-store',
+        signal: controller.signal,
+      });
+      
+      clearTimeout(timeoutId);
+      
+      if (yahooRes.ok) {
+        const yahooData = await yahooRes.json();
+        
+        if (yahooData.chart?.result?.[0]) {
+          const result = yahooData.chart.result[0];
+          const timestamps = result.timestamp || [];
+          const quotes = result.indicators?.quote?.[0] || {};
+          const adjclose = result.indicators?.adjclose?.[0]?.adjclose || [];
+          
+          const data = timestamps
+            .map((timestamp: number, index: number) => ({
+              time: String(timestamp),
+              open: Number((quotes.open?.[index] || 0).toFixed(2)),
+              high: Number((quotes.high?.[index] || 0).toFixed(2)),
+              low: Number((quotes.low?.[index] || 0).toFixed(2)),
+              close: Number((adjclose[index] || quotes.close?.[index] || 0).toFixed(2)),
+              volume: quotes.volume?.[index] || 0,
+            }))
+            .filter((item: any) => item.open > 0 && item.high > 0 && item.low > 0 && item.close > 0);
+          
+          const latest = data[data.length - 1];
+          const prev = data[data.length - 2] || latest;
+          
+          const companyName = result.meta?.longName || result.meta?.shortName || symbol.toUpperCase();
+          
+          console.log(`Yahoo Finance crypto success for ${symbol} (${yahooSymbol}): ${data.length} data points`);
+          
+          return NextResponse.json(
+            {
+              symbol: symbol.toUpperCase(),
+              currentPrice: latest.close,
+              change: latest.close - prev.close,
+              changePercent: prev.close > 0 ? ((latest.close - prev.close) / prev.close) * 100 : 0,
+              data,
+              meta: {
+                companyName,
+                currency: 'USD',
+                exchangeName: 'Crypto',
+                lastUpdated: new Date().toISOString(),
+              },
+            },
+            { headers: getSecurityHeaders() }
+          );
+        }
+      }
+      
+      console.warn(`Yahoo Finance failed for ${symbol} (${yahooSymbol}) - status:`, yahooRes.status);
+    } catch (yahooError) {
+      const isTimeout = yahooError instanceof Error && yahooError.name === 'AbortError';
       console.warn(
-        `CoinGecko API ${isTimeout ? 'timeout' : 'failed'}, using fallback data:`,
-        apiError
-      );
-      return NextResponse.json(
-        generateFallbackData(symbol),
-        { headers: getSecurityHeaders() }
+        `Yahoo Finance ${isTimeout ? 'timeout' : 'error'} for ${symbol} (${getYahooSymbol(symbol)}):`,
+        yahooError
       );
     }
+    
+    // Yahoo Finance 실패 시 폴백 데이터 반환
+    return NextResponse.json(
+      generateFallbackData(symbol),
+      { headers: getSecurityHeaders() }
+    );
   } catch (error) {
     console.error('Crypto data error:', error);
     return NextResponse.json(
       {
         error: '암호화폐 데이터를 가져올 수 없습니다',
         details: error instanceof Error ? error.message : 'Unknown error',
-        suggestion:
-          '지원하는 암호화폐인지 확인하세요 (예: bitcoin, BTC, 비트코인)',
+        suggestion: '지원하는 암호화폐인지 확인하세요 (예: BTC, ETH, 비트코인)',
       },
-      { status: 500 }
+      { 
+        status: 500,
+        headers: getSecurityHeaders()
+      }
     );
   }
 }
