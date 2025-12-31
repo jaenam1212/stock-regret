@@ -22,56 +22,15 @@ interface StockContentProps {
   initialStockInfo?: StockInfo;
 }
 
-// 기본 주식 정보
+// 기본 주식 정보 (SSR에서는 빈 데이터로 로딩 상태 표시)
 const defaultStockInfo: StockInfo = {
   symbol: 'NVDA',
-  currentPrice: 150.0,
-  change: 2.5,
-  changePercent: 1.67,
-  data: [
-    {
-      time: String(Math.floor(Date.now() / 1000) - 86400 * 4),
-      open: 147.5,
-      high: 149.0,
-      low: 147.0,
-      close: 148.0,
-      volume: 1000000,
-    },
-    {
-      time: String(Math.floor(Date.now() / 1000) - 86400 * 3),
-      open: 148.0,
-      high: 150.0,
-      low: 147.5,
-      close: 149.5,
-      volume: 1200000,
-    },
-    {
-      time: String(Math.floor(Date.now() / 1000) - 86400 * 2),
-      open: 149.5,
-      high: 151.0,
-      low: 149.0,
-      close: 150.0,
-      volume: 1100000,
-    },
-    {
-      time: String(Math.floor(Date.now() / 1000) - 86400),
-      open: 150.0,
-      high: 152.0,
-      low: 149.5,
-      close: 151.5,
-      volume: 1300000,
-    },
-    {
-      time: String(Math.floor(Date.now() / 1000)),
-      open: 151.5,
-      high: 153.0,
-      low: 150.5,
-      close: 152.0,
-      volume: 1400000,
-    },
-  ],
+  currentPrice: 0,
+  change: 0,
+  changePercent: 0,
+  data: [],
   meta: {
-    companyName: 'NVIDIA Corporation',
+    companyName: 'Loading...',
     currency: 'USD',
     exchangeName: 'NASDAQ',
     lastUpdated: new Date(0).toISOString(),
@@ -108,6 +67,7 @@ export default function StockContent({
     const loadInitialData = async () => {
       // 초기 데이터가 비어있으면 API에서 최신 데이터 가져오기
       if (initialStockInfo.data.length === 0) {
+        setLoading(true);
         try {
           const data = await getStockData('NVDA', 'us');
           setStockInfo(data);
@@ -118,17 +78,19 @@ export default function StockContent({
           });
         } catch (err) {
           console.error('Failed to load initial data:', err);
-          // 이미 page.tsx에서 기본 데이터를 제공하므로 추가 처리 불필요
+          setError(err instanceof Error ? err.message : 'Failed to load data');
+        } finally {
+          setLoading(false);
         }
       } else {
-        // 초기 데이터가 있으면 백그라운드에서 최신 데이터 가져오기 시도 (목 데이터 확인)
+        // 초기 데이터가 있으면 백그라운드에서 최신 데이터 가져오기 시도
         const isMockData =
           initialStockInfo.meta.lastUpdated === new Date(0).toISOString();
 
         if (isMockData) {
           try {
             const data = await getStockData('NVDA', 'us');
-            // 실제 데이터를 받았을 때만 업데이트 (목 데이터가 아닌 경우)
+            // 실제 데이터를 받았을 때만 업데이트
             if (data.meta.lastUpdated !== new Date(0).toISOString()) {
               setStockInfo(data);
               setLastValidState({
@@ -142,7 +104,6 @@ export default function StockContent({
               'Failed to update initial data, using static data:',
               err
             );
-            // 실패해도 이미 차트 데이터가 있으므로 문제없음
           }
         }
       }
