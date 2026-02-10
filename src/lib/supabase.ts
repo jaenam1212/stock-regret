@@ -16,29 +16,4 @@ export interface User {
   updated_at: string;
 }
 
-export interface CalculationHistory {
-  id: string;
-  user_id: string;
-  symbol: string;
-  invest_date: string;
-  invest_amount: number;
-  past_price: number;
-  current_price: number;
-  shares: number;
-  current_value: number;
-  profit: number;
-  profit_percent: number;
-  yearly_return: number;
-  created_at: string;
-}
 
-export interface Post {
-  id: string;
-  user_id: string;
-  title: string;
-  content: string;
-  symbol?: string;
-  tags?: string[];
-  created_at: string;
-  updated_at: string;
-}

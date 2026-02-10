@@ -14,12 +14,12 @@ import { Suspense, useEffect, useState } from 'react';
 // 기본 주식 정보
 const defaultStockInfo: StockInfo = {
   symbol: 'NVDA',
-  currentPrice: 150.0,
-  change: 2.5,
-  changePercent: 1.67,
+  currentPrice: 0,
+  change: 0,
+  changePercent: 0,
   data: [],
   meta: {
-    companyName: 'NVIDIA Corporation',
+    companyName: 'Loading...',
     currency: 'USD',
     exchangeName: 'NASDAQ',
     lastUpdated: new Date(0).toISOString(),

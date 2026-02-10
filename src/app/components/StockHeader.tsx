@@ -1,51 +1,17 @@
 'use client';
 
-import { checkBackendHealth } from '@/app/api';
 import { formatPrice } from '@/app/lib/utils';
 import { MarketType, StockInfo } from '@/types/stock';
-import { useEffect, useState } from 'react';
 
 interface StockHeaderProps {
   stockInfo: StockInfo;
-  symbol: string;
   marketType: MarketType;
-  onSymbolChange: (symbol: string) => void;
 }
 
 export default function StockHeader({
   stockInfo,
-  symbol, // eslint-disable-line @typescript-eslint/no-unused-vars
   marketType,
-  onSymbolChange, // eslint-disable-line @typescript-eslint/no-unused-vars
 }: StockHeaderProps) {
-  const [apiHealthy, setApiHealthy] = useState<boolean | null>(null); // eslint-disable-line @typescript-eslint/no-unused-vars
-
-  useEffect(() => {
-    let isMounted = true;
-    const checkHealth = async () => {
-      try {
-        const isHealthy = await checkBackendHealth();
-        if (!isMounted) return;
-        setApiHealthy(isHealthy);
-      } catch (error) {
-        if (!isMounted) return;
-        console.warn('Health check error in StockHeader:', error);
-        setApiHealthy(false);
-      }
-    };
-    
-    // 초기 헬스체크는 지연 실행하여 UI 블로킹 방지
-    const timeoutId = setTimeout(checkHealth, 1000);
-    
-    // 주기적 헬스체크는 60초로 변경 (부하 감소)
-    const intervalId = setInterval(checkHealth, 60000);
-    
-    return () => {
-      isMounted = false;
-      clearTimeout(timeoutId);
-      clearInterval(intervalId);
-    };
-  }, []);
 
   const getMarketLabel = (type: MarketType) => {
     switch (type) {

@@ -124,7 +124,4 @@ CREATE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW EXECUTE FUNCTION handle_new_user();
 
--- RLS 비활성화 (테스트용 - 나중에 다시 활성화)
-ALTER TABLE profiles DISABLE ROW LEVEL SECURITY;
-ALTER TABLE calculation_history DISABLE ROW LEVEL SECURITY;  
-ALTER TABLE posts DISABLE ROW LEVEL SECURITY;
+-- RLS 활성화 상태 유지 (프로덕션 보안 필수)

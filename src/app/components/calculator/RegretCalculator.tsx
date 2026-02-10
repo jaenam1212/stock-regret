@@ -1,7 +1,5 @@
 'use client';
 
-import { useAuth } from '@/app/hooks/useAuth';
-import { useCalculationHistory } from '@/app/hooks/useCalculationHistory';
 import { useExchangeRate } from '@/app/hooks/useExchangeRate';
 import { formatPrice } from '@/app/lib/utils';
 import { CalculationResult, StockInfo } from '@/types/stock';
@@ -31,12 +29,8 @@ export default function RegretCalculator({
   const [calculation, setCalculation] = useState<CalculationResult | null>(
     null
   );
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
   const [showShareCard, setShowShareCard] = useState(false);
   const { exchangeRate, loading: exchangeRateLoading } = useExchangeRate();
-  const { user } = useAuth();
-  const { saveCalculation } = useCalculationHistory(user?.id);
 
   // 선택된 날짜가 변경되면 투자 날짜 업데이트
   useEffect(() => {
@@ -52,7 +46,7 @@ export default function RegretCalculator({
     : '';
   const maxDate = new Date().toISOString().split('T')[0];
 
-  const calculateRegret = async () => {
+  const calculateRegret = () => {
     if (
       !investDate ||
       (investmentType === 'lump-sum' ? !investAmount : !monthlyAmount)
@@ -113,19 +107,6 @@ export default function RegretCalculator({
         (Math.pow(currentValue / investAmount, 1 / yearsDiff) - 1) * 100;
     }
 
-    console.log('계산 디버깅:', {
-      pastPrice,
-      currentPrice,
-      investBase,
-      shares,
-      currentValueBase,
-      currentValue,
-      profit,
-      profitPercent,
-      yearsDiff,
-      yearlyReturn,
-    });
-
     const result = {
       investAmount,
       investDate: investDateObj.toLocaleDateString('ko-KR'),
@@ -139,20 +120,6 @@ export default function RegretCalculator({
     };
 
     setCalculation(result);
-    setSaved(false);
-
-    // 히스토리 저장 기능 비활성화됨
-    // if (user && saveCalculation) {
-    //   setSaving(true);
-    //   try {
-    //     await saveCalculation(stockInfo.symbol, result);
-    //     setSaved(true);
-    //   } catch (err) {
-    //     console.error('Failed to save calculation:', err);
-    //   } finally {
-    //     setSaving(false);
-    //   }
-    // }
   };
 
   const calculateMonthlyInvestment = () => {
@@ -231,7 +198,6 @@ export default function RegretCalculator({
     };
 
     setCalculation(result);
-    setSaved(false);
   };
 
   return (
@@ -314,22 +280,7 @@ export default function RegretCalculator({
               </div>
             )}
 
-            {/* 히스토리 저장 표시 비활성화됨
-            {user && (
-              <div className="mt-4 p-3 bg-gray-800/30 rounded-lg">
-                <div className="flex items-center justify-between">
-                  <span className="text-sm text-gray-400">계산 내역 저장</span>
-                  {saving ? (
-                    <span className="text-blue-400 text-sm">저장 중...</span>
-                  ) : saved ? (
-                    <span className="text-green-400 text-sm">✓ 저장됨</span>
-                  ) : (
-                    <span className="text-gray-500 text-sm">자동 저장</span>
-                  )}
-                </div>
-              </div>
-            )}
-            */}
+
           </div>
         )}
       </div>

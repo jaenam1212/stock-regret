@@ -268,9 +268,7 @@ export default function StockContent({
             <div className="bg-gray-900/50 backdrop-blur-sm rounded-lg sm:rounded-xl border border-gray-800 overflow-hidden mb-3 sm:mb-4 lg:mb-6">
               <StockHeader
                 stockInfo={stockInfo}
-                symbol={symbol}
                 marketType={marketType}
-                onSymbolChange={handleSymbolChange}
               />
               <div className="p-3 sm:p-4 lg:p-6">
                 <div className="h-64 sm:h-80 lg:h-96">
