@@ -6,7 +6,9 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "remotion:studio": "remotion studio remotion/index.ts --port 4000",
+    "remotion:render": "remotion render remotion/index.ts AsalggulPromo out/promo.mp4"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.53.0",
@@ -27,6 +29,10 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@remotion/cli": "^4.0.420",
+    "@remotion/player": "^4.0.420",
+    "@remotion/tailwind-v4": "^4.0.420",
+    "@remotion/transitions": "^4.0.420",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20.19.9",
     "@types/react": "^19",
@@ -35,6 +41,7 @@
     "eslint-config-next": "15.4.5",
     "eslint-config-prettier": "^10.1.8",
     "eslint-plugin-prettier": "^5.5.4",
+    "remotion": "^4.0.420",
     "tailwindcss": "^4",
     "typescript": "^5"
   }
